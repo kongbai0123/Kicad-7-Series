@@ -263,6 +263,98 @@ class LearningTests(unittest.TestCase):
         archive = state.LEARNING / "archive"
         self.assertTrue(not archive.exists() or not any(archive.iterdir()))
 
+    def test_reset_rolls_back_even_after_progress_and_event_were_written(self):
+        folder = self.prepare_practice()
+        before = state.PROGRESS.read_bytes()
+        event_path = state.LEARNING / "events.jsonl"
+        events_before = event_path.read_bytes()
+        save = state._save
+
+        def fail_after_save(*args):
+            save(*args)
+            raise OSError("event flush failed")
+
+        with mock.patch.object(state, "_save", side_effect=fail_after_save):
+            with self.assertRaises(state.StateError):
+                self.reset()
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+        self.assertEqual(event_path.read_bytes(), events_before)
+        self.assertEqual((folder / "User Interface.kicad_pro").read_text(encoding="utf-8"), "my practice")
+
+    def test_reset_keeps_archived_work_when_moving_it_back_fails(self):
+        folder = self.prepare_practice()
+        before = state.PROGRESS.read_bytes()
+        rename = state.os.rename
+
+        def fail_on_restore(source, target):
+            if Path(source).name == "workspace":
+                raise OSError("restore blocked")
+            return rename(source, target)
+
+        with mock.patch.object(state, "_save", side_effect=OSError("disk full")), \
+             mock.patch.object(state.os, "rename", side_effect=fail_on_restore):
+            with self.assertRaises(state.StateError) as caught:
+                self.reset()
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+        self.assertFalse(folder.exists())
+        archives = list((state.LEARNING / "archive").iterdir())
+        self.assertEqual(len(archives), 1)
+        self.assertEqual((archives[0] / "workspace/User Interface.kicad_pro").read_text(encoding="utf-8"), "my practice")
+        self.assertEqual((archives[0] / "progress-full-before.json").read_bytes(), before)
+        self.assertIn(archives[0].relative_to(self.root).as_posix(), str(caught.exception))
+
+    def test_reset_keeps_backup_when_progress_cannot_be_restored(self):
+        self.prepare_practice()
+        before = state.PROGRESS.read_bytes()
+        atomic = state._atomic_bytes
+        save = state._save
+        writes = []
+
+        def fail_on_restore(path, data):
+            if path == state.PROGRESS:
+                writes.append(path)
+                if len(writes) == 2:
+                    raise OSError("restore progress blocked")
+            atomic(path, data)
+
+        def fail_after_save(*args):
+            save(*args)
+            raise OSError("late failure")
+
+        with mock.patch.object(state, "_atomic_bytes", side_effect=fail_on_restore), \
+             mock.patch.object(state, "_save", side_effect=fail_after_save):
+            with self.assertRaises(state.StateError) as caught:
+                self.reset()
+        backups = list((state.LEARNING / "archive").glob("*/progress-full-before.json"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_bytes(), before)
+        self.assertIn("部分回復未完成", str(caught.exception))
+
+    def test_reset_all_checks_every_lock_before_moving_any_lesson(self):
+        folder = self.prepare_practice()
+        (folder / "~User Interface.kicad_sch.lck").write_text("{}", encoding="utf-8")
+        before = state.PROGRESS.read_bytes()
+        with self.assertRaises(state.StateError) as caught:
+            self.reset("all")
+        self.assertEqual(caught.exception.status, 423)
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+        self.assertTrue(folder.exists())
+        self.assertFalse((state.LEARNING / "archive").exists())
+
+    def test_reset_rejects_aliases_to_original_course_or_archive(self):
+        folder = self.prepare_practice()
+        before = state.PROGRESS.read_bytes()
+        safe = state.safe_path
+        for redirected in ("learning/workspaces/02", "learning/archive"):
+            def resolve(relative):
+                return self.root / "2_User Interface" if relative == redirected else safe(relative)
+            with self.subTest(path=redirected), mock.patch.object(state, "safe_path", side_effect=resolve):
+                with self.assertRaises(state.StateError):
+                    self.reset()
+            self.assertEqual(state.PROGRESS.read_bytes(), before)
+            self.assertTrue(folder.exists())
+            self.assertEqual((self.root / "2_User Interface/User Interface.kicad_pro").read_text(encoding="utf-8"), "original")
+
     def test_http_reset_requires_confirmation_then_restarts_the_lesson(self):
         self.prepare_practice()
         httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)

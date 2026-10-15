@@ -126,13 +126,16 @@ def progress():
 
 
 def _atomic_json(path: Path, value):
+    _atomic_bytes(path, (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+
+
+def _atomic_bytes(path: Path, data: bytes):
     path.parent.mkdir(parents=True, exist_ok=True)
     name = None
     try:
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False, suffix=".tmp") as handle:
+        with tempfile.NamedTemporaryFile("wb", dir=path.parent, delete=False, suffix=".tmp") as handle:
             name = handle.name
-            json.dump(value, handle, ensure_ascii=False, indent=2)
-            handle.write("\n")
+            handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(name, path)
@@ -253,6 +256,14 @@ def _kicad_locks(folder: Path):
     return sorted({item.name for item in folder.rglob("*.lck") if item.name.startswith("~")})
 
 
+def _reset_path(relative: str):
+    """Reject links/junctions, including aliases to original course material."""
+    path = safe_path(relative)
+    if path != (REPO / relative).absolute():
+        raise StateError("重置路徑含有符號連結或目錄接合點，已停止以保護原檔案。", 500)
+    return path
+
+
 def reset(payload, *, actor="learner", ignore_locks=False):
     """Return one lesson (or every lesson) to its first step.
 
@@ -279,7 +290,7 @@ def reset(payload, *, actor="learner", ignore_locks=False):
             managed = f"learning/workspaces/{lesson_id}"
             folder = None
             if current.get("workspace") == managed:
-                candidate = safe_path(managed)
+                candidate = _reset_path(managed)
                 if candidate.is_symlink() or (candidate.exists() and not candidate.is_dir()):
                     raise StateError(f"第 {lesson_id} 課的練習副本位置不正確，已停止。", 500)
                 if candidate.exists():
@@ -290,7 +301,8 @@ def reset(payload, *, actor="learner", ignore_locks=False):
                     raise StateError(
                         f"第 {lesson_id} 課的練習專案似乎還在 KiCad 開著（{'、'.join(locks)}）。"
                         "請先在 KiCad 選「檔案 → 關閉專案」，再重新開始。"
-                        f"若 KiCad 其實已關閉，這是上次異常結束留下的鎖定檔，"
+                        "請確認所有相關的 KiCad 管理員、原理圖與 PCB 編輯器都已關閉。"
+                        f"若已全部關閉，可能是上次異常結束留下的鎖定檔，"
                         f"可到 {managed}/ 刪除檔名以 ~ 開頭、副檔名為 .lck 的檔案後再試。", 423)
             touched = (folder is not None or current.get("workspace") or current["status"] != "not_started"
                        or current.get("completedSteps") or current.get("notes") or current.get("evidence"))
@@ -300,7 +312,10 @@ def reset(payload, *, actor="learner", ignore_locks=False):
             raise StateError("沒有需要重新開始的內容。")
 
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        archive_root = LEARNING / "archive"
+        archive_root = _reset_path("learning/archive")
+        progress_before = PROGRESS.read_bytes()
+        events_path = LEARNING / "events.jsonl"
+        events_before = events_path.read_bytes() if events_path.exists() else None
         moved, created, archived = [], [], []
         try:
             for lesson, current, folder in plan:
@@ -311,10 +326,11 @@ def reset(payload, *, actor="learner", ignore_locks=False):
                     destination = archive_root / f"{lesson['id']}-{stamp}-{suffix}"
                 destination.mkdir(parents=True)
                 created.append(destination)
+                _atomic_bytes(destination / "progress-full-before.json", progress_before)
                 _atomic_json(destination / "progress-before.json",
                              {"lessonId": lesson["id"], "archivedAt": now(), "state": current})
                 if folder is not None:
-                    shutil.move(str(folder), str(destination / "workspace"))
+                    os.rename(folder, destination / "workspace")
                     moved.append((destination / "workspace", folder))
                 archived.append(destination.relative_to(REPO).as_posix())
             after = json.loads(json.dumps(before))
@@ -328,13 +344,37 @@ def reset(payload, *, actor="learner", ignore_locks=False):
             _save(before, after, {"action": "reset_all" if scope == "all" else "reset_lesson",
                                   "lessonId": scope, "actor": actor, "archived": archived})
         except Exception as exc:
+            recovery_errors = []
+            try:
+                if PROGRESS.read_bytes() != progress_before:
+                    _atomic_bytes(PROGRESS, progress_before)
+                if events_before is None:
+                    events_path.unlink(missing_ok=True)
+                elif events_path.read_bytes() != events_before:
+                    _atomic_bytes(events_path, events_before)
+            except OSError as recovery:
+                recovery_errors.append(f"進度或事件回復失敗：{recovery}")
             for source, original in reversed(moved):
                 try:
-                    shutil.move(str(source), str(original))
-                except OSError:
-                    pass
-            for destination in created:
-                shutil.rmtree(destination, ignore_errors=True)
+                    if original.exists():
+                        raise OSError(f"原練習路徑已有檔案：{original}")
+                    os.rename(source, original)
+                except OSError as recovery:
+                    recovery_errors.append(f"副本仍保留於 {source.relative_to(REPO).as_posix()}：{recovery}")
+            if not recovery_errors:
+                for destination in reversed(created):
+                    try:
+                        # Only remove our metadata, never recursively delete a failed archive.
+                        for name in ("progress-before.json", "progress-full-before.json"):
+                            (destination / name).unlink(missing_ok=True)
+                        destination.rmdir()
+                    except OSError as recovery:
+                        recovery_errors.append(f"封存目錄保留：{destination.relative_to(REPO).as_posix()}：{recovery}")
+            if recovery_errors:
+                locations = "、".join(path.relative_to(REPO).as_posix() for path in created)
+                raise StateError(f"重新開始沒有完成；部分回復未完成，請勿再次重置。"
+                                 f"封存與進度備份保留於 {locations}。"
+                                 + "；".join(recovery_errors), 500) from exc
             if isinstance(exc, StateError):
                 raise
             raise StateError(f"重新開始沒有完成，已還原原本的進度與練習副本：{exc}", 500) from exc

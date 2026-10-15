@@ -52,7 +52,7 @@ def main():
     if shutil.which("git") and (root / ".git").exists():
         tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=root).decode("utf-8").split("\0")
         private = [name for name in tracked if name == "learning/progress.json" or
-                   name.startswith(("learning/journal/", "learning/evidence/", "learning/workspaces/"))]
+                   name.startswith(("learning/journal/", "learning/evidence/", "learning/workspaces/", "learning/archive/"))]
         assert not private, f"Personal data is tracked: {private}"
     print("Course resources, README links, blank initialization and private-data separation: OK")
 
