@@ -4,6 +4,7 @@
 **/.history/
 **/*-backups/
 /1_Introduction/report.txt
+/1_Introduction/gerber/
 
 # Python environments and credentials
 __pycache__/

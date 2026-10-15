@@ -29,6 +29,20 @@ def run_check(payload):
     return checks.run_step(lesson, step, state.progress())
 
 
+def learning_resources():
+    resources = state.read_json(state.LEARNING / "resources.json")
+    journal = list(resources.get("journal", []))
+    known = {entry["path"] for entry in journal}
+    for path in sorted((state.LEARNING / "journal").glob("*.md"), reverse=True):
+        relative = path.relative_to(state.REPO).as_posix()
+        if relative in known:
+            continue
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
+        title = next((line.lstrip("# ") for line in lines if line.startswith("# ")), path.stem)
+        journal.append({"title": title, "path": relative, "summary": "本機個人學習紀錄，不納入版本庫。"})
+    return {"journal": journal, "guides": resources.get("guides", []), "examples": resources.get("examples", [])}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "KiCadLearning/1"
 
@@ -79,8 +93,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json({
                     "projectRoot": str(state.REPO),
                     "catalog": state.catalog(), "progress": state.progress(),
-                    "journal": state.read_json(state.LEARNING / "resources.json")["journal"],
-                    "guides": state.read_json(state.LEARNING / "resources.json")["guides"]})
+                    **learning_resources()})
             if route == "/api/export":
                 return self.send_json(state.progress(), extra={"Content-Disposition": 'attachment; filename="KiCad-learning-progress.json"'})
             if route in {"/", "/index.html", "/app.css", "/app.js"}:

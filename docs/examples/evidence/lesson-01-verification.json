@@ -1,7 +1,7 @@
 {
   "verifiedAt": "2026-10-15T10:45:26+08:00",
   "method": "Python stdlib zipfile CRC and byte comparison with current exported files",
-  "archive": "1_Introduction/gerber/Introduction-Gerber.zip",
+  "archive": "docs/examples/led-board/gerber/Introduction-Gerber.zip",
   "entryCount": 10,
   "crcPassed": true,
   "matchesCurrentExportedFiles": true,
@@ -18,6 +18,6 @@
     "Introduction-B_Silkscreen.gbr"
   ],
   "sha256": "65da66bb9946fc2467973d7d02405dd20a9aa9bd993439a42a8ccb350f6ef3a1",
-  "priorDrcReport": "learning/evidence/lesson-01-drc.json",
+  "priorDrcReport": "docs/examples/evidence/lesson-01-drc.json",
   "scope": "ZIP verification is current; the DRC JSON is the earlier successful check from this learning session."
 }

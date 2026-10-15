@@ -1,10 +1,12 @@
-# KiCad 邊做邊學
+# KiCad 10 · 繁體中文 · Windows
+
+**fork of [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series)** · [English](README.en.md) · [v0.1.0](https://github.com/kongbai0123/Kicad-7-Series/releases/tag/v0.1.0)
 
 以繁體中文、逐步操作與實際畫面，學習從原理圖到 PCB 製板輸出的完整流程。本 fork 在 [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series) 的教材上，加入 **15 課統一入口、90 個操作檢查點、截圖圖解、練習副本與共用進度**。
 
-原教材使用 **KiCad 7**；本學習系統以 **Windows 與 KiCad 10.0.7 繁體中文介面**實作。2026-10-15 版本的變更見 [更新紀錄](CHANGELOG.md)。
+原教材使用 **KiCad 7**；本學習系統以 **Windows 與 KiCad 10.0.7 繁體中文介面**實作。需求：**Windows、Python 3.10 以上、KiCad**。變更見 [更新紀錄](CHANGELOG.md)。
 
-![鑽孔與銅焊墊對齊操作圖](learning/assets/gerbview-alignment-guide.png)
+![實際學習頁面：課程清單、逐項操作與圖上編號](docs/images/learning-page.jpg)
 
 ## 快速開始
 
@@ -18,13 +20,13 @@ cd Kicad-7-Series
 
 也可以在檔案總管連按兩下根目錄的 **`Start-Learning.cmd`**。程式會啟動本機服務並開啟瀏覽器，預設網址為 `http://127.0.0.1:8765/`；若連接埠被占用，會尋找下一個可用位置。服務只監聽本機。
 
-1. 選擇課程，按 **開啟練習專案**。第 2 至 15 課會建立自己的副本。
+1. 選擇課程，按 **開啟練習專案**。全部 15 課都會建立自己的副本。
 2. 每次只做目前這一步，對照操作說明、編號圖與成功判準。
 3. 有小問題時先作答；有自動檢查時可按 **先檢查一次**。
 4. 實際完成後按 **我做完了，記錄進度**，再進到下一步。
-5. 卡住時，按 **複製接續訊息**貼入可存取本專案的 Codex 對話，附上當前畫面，接著逐步問答。
+5. 卡住時，按 **複製接續訊息**貼入可存取本專案的 AI 助教對話，附上當前畫面，接著逐步問答。
 
-問答引導在對話中進行，學習頁負責呈現課程及保存進度。單獨使用頁面不需要 OpenAI API 金鑰。完整操作方法見 [學習入口說明](learning/README.md)。停止本機服務可執行 **`Stop-Learning.cmd`**。
+問答引導在對話中進行，學習頁負責呈現課程及保存進度。本機頁面不需雲端帳號或 API 金鑰；AI 助教需能讀取本機專案並遵循通用的 `AGENTS.md`，不限定特定產品。完整操作方法見 [學習入口說明](learning/README.md)。停止本機服務可執行 **`Stop-Learning.cmd`**。
 
 ## 15 課學習路線
 
@@ -46,7 +48,7 @@ cd Kicad-7-Series
 | 14 | 封裝與 3D 對應 | [14_Create_Custom_Library_part-2](14_Create_Custom_Library_part-2/) |
 | 15 | 生產前整理與版本比較 | [15_PCB_Optimization](15_PCB_Optimization/) |
 
-原系列的共同專案是 ATtiny85 感光、感風的 Reactive / Digital Diya 電子燈。第 1 課另保留本次完成的 3V 電池、1k 電阻及 LED 圓形電路板練習。各章是不同階段的範例快照，其中第 8 課使用獨立規則示範板，請依課程說明使用各自副本。
+原系列的共同專案是 ATtiny85 感光、感風的 Reactive / Digital Diya 電子燈。第 1 課練習 3V 電池、1k 電阻及 LED 圓形電路板；完成範例獨立放在 `docs/examples/`。各章教材維持上游原路徑，其中第 8 課使用獨立規則示範板，請依課程說明使用各自副本。
 
 ## 引導與進度
 
@@ -54,17 +56,17 @@ cd Kicad-7-Series
 - **實際畫面圖解**：課程步驟附 KiCad 10 截圖、位置編號與對應文字。
 - **觀察與檢查**：以小問題協助辨認畫面，並從練習檔案檢查可驗證的結果。
 - **共用進度**：網頁與教師命令列共用一份 JSON，以鎖定和 revision 檢查避免互相覆寫。
-- **練習副本**：第 2 至 15 課使用 `learning/workspaces/`，各課獨立操作。
+- **練習副本**：全部 15 課使用 `learning/workspaces/`，各課獨立操作。
 - **接續教學**：學習紀錄與 [AGENTS.md](AGENTS.md) 保存引導方式，讓後續對話依最新進度接續。
 
-本 fork 包含本次學習的進度快照：第 1 課完成至製板 ZIP，第 2 課已建立副本並停在第一步。這是既有學習紀錄，不代表下載者已完成這些課程。最新狀態以本機 `learning/progress.json` 為準。
+新下載者會從 **第 1 課、全部未開始**起步。若沒有 `learning/progress.json`，程式會依 `progress.template.json` 自動建立空白進度；已有的個人進度會保留。個人進度、日誌、證據與工作副本均不納入 Git，公開範例不會自動匯入進度。
 
 ## 第 1 課實作成果
 
-- [問答過程、卡關原因及解法](learning/journal/2026-10-15-lesson-01.md)
+- [問答過程、卡關原因及解法範例](docs/examples/lesson-01.md)
 - [圓形電路板 3D 畫面](learning/assets/lesson-01-round-board-3d.png)
-- [Gerber 與鑽孔輸出](1_Introduction/gerber/)
-- [Introduction-Gerber.zip](1_Introduction/gerber/Introduction-Gerber.zip)：7 個 Gerber、2 個鑽孔檔及 1 個 job 資訊檔，共 10 個檔案。
+- [範例設計、Gerber 與鑽孔輸出](docs/examples/led-board/)
+- [範例 Introduction-Gerber.zip](docs/examples/led-board/gerber/Introduction-Gerber.zip)：7 個 Gerber、2 個鑽孔檔及 1 個 job 資訊檔，共 10 個檔案。
 
 此成果已完成設計與輸出檢查；尚未記錄實際製板、焊接及點燈測試。
 
@@ -77,19 +79,20 @@ Kicad-7-Series/
 ├─ AGENTS.md                 持久教學規範
 ├─ learning/
 │  ├─ catalog.json           15 課與操作步驟
-│  ├─ progress.json          共用進度
+│  ├─ progress.template.json 空白進度範本
+│  ├─ progress.json          個人進度，自動建立且不納入 Git
 │  ├─ web/                   學習頁面
 │  ├─ checks.py              自動檢查
 │  ├─ manage.py              教師進度工具
 │  ├─ assets/                截圖與圖解
-│  ├─ journal/               學習紀錄
+│  ├─ journal/               個人學習紀錄，不納入 Git
 │  └─ workspaces/            本機練習副本，不納入 Git
-├─ 1_Introduction/           第 1 課練習與製板輸出
+├─ 1_Introduction/           上游原始入門教材
 ├─ 2_User Interface/ …       其他原教材課程
-└─ docs/UPSTREAM_README.md   原作者 README
+└─ docs/                    公開完成範例、產品畫面與原作者 README
 ```
 
-執行中的服務資訊、日誌、練習副本及 KiCad 本機狀態不納入本次提交。請另外備份自己的練習成果。
+請另外備份個人進度與練習成果。升級舊版本前，也應先備份舊版曾追蹤的進度與第一課設計；本次重構不會改寫先前的 Git 歷史。
 
 ## 檢查與維護
 
@@ -103,17 +106,18 @@ python -m unittest discover -s learning -p "test_*.py" -v
 
 ```powershell
 node --check learning/web/app.js
+python learning/validate_repository.py
 ```
 
 測試使用隔離資料，不會替學員完成課程。教師讀取進度使用 `python learning/manage.py status`；進度寫入方式見 [AGENTS.md](AGENTS.md)。
 
 ### 目前自動檢查的限制
 
-這是教學輔助系統，以下三點仍待改善，請搭配實際畫面及 KiCad 檢查結果判斷：
+仍待改善的行為集中追蹤於 [必要檢查無法執行時的判定 #1](https://github.com/kongbai0123/Kicad-7-Series/issues/1)、[製板 ZIP 完整性驗證 #2](https://github.com/kongbai0123/Kicad-7-Series/issues/2)、[放大圖片保留編號 #3](https://github.com/kongbai0123/Kicad-7-Series/issues/3)。
 
-1. 找不到檢查工具或工具執行失敗時，必要檢查的「無法判斷」可能仍使整體通過。
-2. ZIP 檢查目前核對副檔名與 CRC，尚未完整核對必要製板圖層及檔案內容。
-3. 圖片編號目前疊在課程頁上，直接開啟原圖放大時不會保留編號。
+## 參與貢獻
+
+請先閱讀 [CONTRIBUTING.md](CONTRIBUTING.md)。可使用 Issues 的問題回報與課程建議範本；GitHub Actions 會在 Windows 上執行 Python 3.10／3.13 測試與內容檢查。
 
 ## 原教材與授權
 
@@ -126,5 +130,3 @@ node --check learning/web/app.js
 - [Reactive Diya 專案](https://github.com/Neutrino-1/SideQuest/tree/main/Reactive%20Diya)
 
 沿用 [MIT License](LICENSE)，保留原作者著作權與授權條款。
-
-

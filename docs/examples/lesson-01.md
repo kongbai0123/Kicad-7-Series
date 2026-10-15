@@ -1,10 +1,14 @@
+# 示範紀錄 完成 LED 圓形板的學習過程
+
+> 這是可供參考的完成範例，不是下載者的學習進度，也不會匯入個人狀態。
+
 # 第 1 課 LED 圓形電路板學習紀錄
 
 日期為 2026 年 10 月 15 日，使用 Windows 與 KiCad 10.0.7，教材為 Kicad 7 Series。學員以「做一小步、回報結果、貼圖排除問題、再往下」的方式，完成電池、電阻及 LED 的電路設計，直到 Gerber 和鑽孔檔打包。這是第 1 課的完整練習紀錄，不代表其他 14 課已完成。
 
 ## 設計與成果
 
-專案位於 `D:\others\study\Kicad-7-Series\1_Introduction`。
+專案位於 `docs/examples/led-board`。
 
 | 項目 | 本次結果 |
 |---|---|
@@ -15,7 +19,7 @@
 | PCB | 元件佈局與佈線完成，圓形板框放在 `Edge.Cuts`。 |
 | 板框 | 半徑 23.67054 mm，直徑 47.34108 mm。 |
 | 檢查 | ERC、DRC 與未連接項目通過；孔位疊圖確認對齊。 |
-| 製板輸出 | `1_Introduction/gerber/` 內含 7 個 Gerber、2 個鑽孔檔與 1 個 Gerber job 檔。 |
+| 製板輸出 | `docs/examples/led-board/gerber/` 內含 7 個 Gerber、2 個鑽孔檔與 1 個 Gerber job 檔。 |
 | 打包 | `Introduction-Gerber.zip`，內含 10 個檔案。 |
 
 ## 問答與排除問題
@@ -42,24 +46,24 @@
 
 圓形原先在 `F.Cu`，需要改為板框圖層：
 
-![圓形屬性中圖層為 F.Cu](../assets/lesson-01-circle-wrong-layer.png)
+![圓形屬性中圖層為 F.Cu](../../learning/assets/lesson-01-circle-wrong-layer.png)
 
 修正後，3D 顯示圓形板：
 
-![圓形電路板的 3D 畫面](../assets/lesson-01-round-board-3d.png)
+![圓形電路板的 3D 畫面](../../learning/assets/lesson-01-round-board-3d.png)
 
 DRC 結果視窗顯示錯誤與警告為零：
 
-![DRC 通過的結果視窗](../assets/lesson-01-drc-passed.png)
+![DRC 通過的結果視窗](../../learning/assets/lesson-01-drc-passed.png)
 
 鑽孔疊在銅焊墊中央；桃色小圓代表鑽孔位置：
 
-![放大的鑽孔與銅墊對齊畫面](../assets/lesson-01-drill-aligned.png)
+![放大的鑽孔與銅墊對齊畫面](../../learning/assets/lesson-01-drill-aligned.png)
 
 供複習的操作標示圖：
 
-- [載入鑽孔與調整圖層的操作圖](../assets/gerbview-drill-guide.png)
-- [辨認鑽孔與銅墊的操作圖](../assets/gerbview-alignment-guide.png)
+- [載入鑽孔與調整圖層的操作圖](../../learning/assets/gerbview-drill-guide.png)
+- [辨認鑽孔與銅墊的操作圖](../../learning/assets/gerbview-alignment-guide.png)
 
 ## 檢查結果與證據
 
@@ -94,6 +98,6 @@ Gerber 的鑽孔與貼裝原點選項未啟用，鑽孔使用絕對原點；座�
 
 ## 最後狀態與下次第一步
 
-本次紀錄結束時，第 1 課完成至 ZIP 打包，尚未送製；第 2 至 15 課未開始。最新狀態以 [共用進度檔](../progress.json) 為準。
+本次紀錄結束時，第 1 課完成至 ZIP 打包，尚未送製；第 2 至 15 課未開始。最新狀態以 本機 `learning/progress.json`（不納入版本庫） 為準。
 
 下一次從第 2 課 `02-01`「開啟練習專案」開始：在統一窗口選擇第 2 課，建立 `learning/workspaces/02/` 副本，開啟其中的 KiCad 專案，請學員回報目前看到的視窗，再進行下一個小目標。

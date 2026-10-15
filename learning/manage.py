@@ -8,6 +8,8 @@ import state
 parser = argparse.ArgumentParser(description=__doc__)
 sub = parser.add_subparsers(dest="command", required=True)
 sub.add_parser("status")
+migrate = sub.add_parser("migrate-intro")
+migrate.add_argument("--revision", type=int, required=True)
 record = sub.add_parser("record")
 record.add_argument("--lesson", required=True)
 record.add_argument("--action", choices=["activate_lesson", "confirm_step", "add_note"], required=True)
@@ -19,6 +21,8 @@ args = parser.parse_args()
 try:
     if args.command == "status":
         result = state.progress()
+    elif args.command == "migrate-intro":
+        result = state.migrate_intro_workspace(args.revision)
     else:
         note = args.note_file.read_text(encoding="utf-8-sig") if args.note_file else args.note
         result = state.mutate({"lessonId": args.lesson, "action": args.action,

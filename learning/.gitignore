@@ -6,3 +6,7 @@ server.log
 server-error.log
 workspaces/
 events.jsonl
+progress.json
+journal/
+evidence/
+preview-fixture/

@@ -1,0 +1,18 @@
+name: 課程與引導建議 Lesson feedback
+description: 告訴我們哪一步看不懂，或建議補上哪種圖解。
+title: "[Lesson] "
+body:
+  - type: input
+    id: step
+    attributes:
+      label: 課程與步驟編號
+      placeholder: "例如 12-04"
+    validations:
+      required: true
+  - type: textarea
+    id: feedback
+    attributes:
+      label: 看不懂或想改善的部分
+      description: 說明目前畫面、卡住的位置，以及希望補充的內容。
+    validations:
+      required: true

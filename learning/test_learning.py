@@ -32,6 +32,7 @@ class LearningTests(unittest.TestCase):
                 "01": {"status": "completed", "currentStep": "01-01", "completedSteps": ["01-01"], "notes": "", "evidence": [], "workspace": "1_Introduction"},
                 "02": {"status": "not_started", "currentStep": "02-01", "completedSteps": [], "notes": "", "evidence": [], "workspace": None}}})
         self.write(state.LEARNING / "resources.json", {"journal": [], "guides": []})
+        self.write(state.LEARNING / "progress.template.json", {"schemaVersion": 1, "learner": {"language": "zh-Hant"}})
         (self.root / "2_User Interface").mkdir()
         (self.root / "2_User Interface/User Interface.kicad_pro").write_text("original", encoding="utf-8")
 
@@ -52,6 +53,54 @@ class LearningTests(unittest.TestCase):
         self.assertEqual(state.progress()["lessons"]["02"]["status"], "not_started")
         state.catalog()
         self.assertEqual(state.PROGRESS.read_bytes(), before)
+
+    def test_missing_progress_initializes_every_lesson_as_not_started(self):
+        state.PROGRESS.unlink()
+        initial = state.progress()
+        self.assertEqual(initial["activeLesson"], "01")
+        self.assertEqual(initial["revision"], 1)
+        self.assertTrue(all(s["status"] == "not_started" and not s["completedSteps"] and s["workspace"] is None
+                            for s in initial["lessons"].values()))
+        before = state.PROGRESS.read_bytes()
+        state.progress()
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+
+    def test_concurrent_first_reads_create_only_one_progress_file(self):
+        state.PROGRESS.unlink()
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(lambda _: state.progress(), range(4)))
+        self.assertTrue(all(r == results[0] for r in results))
+        self.assertEqual(state.progress()["revision"], 1)
+
+    def test_existing_or_invalid_progress_is_never_replaced_by_template(self):
+        before = state.PROGRESS.read_bytes()
+        state.progress()
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+        state.PROGRESS.write_text("invalid personal data", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            state.progress()
+        self.assertEqual(state.PROGRESS.read_text(encoding="utf-8"), "invalid personal data")
+
+    def test_intro_migration_preserves_completion_and_active_lesson(self):
+        source = self.root / "1_Introduction"
+        source.mkdir()
+        (source / "Introduction.kicad_sch").write_text("learner design", encoding="utf-8")
+        migrated = state.migrate_intro_workspace(1)
+        self.assertEqual(migrated["activeLesson"], "02")
+        self.assertEqual(migrated["lessons"]["01"]["status"], "completed")
+        self.assertEqual(migrated["lessons"]["01"]["workspace"], "learning/workspaces/01")
+        self.assertEqual((self.root / "learning/workspaces/01/Introduction.kicad_sch").read_text(), "learner design")
+        self.assertEqual((source / "Introduction.kicad_sch").read_text(), "learner design")
+
+    def test_new_intro_practice_uses_its_own_copy(self):
+        source = self.root / "1_Introduction"
+        source.mkdir()
+        (source / "Introduction.kicad_sch").write_text("original blank", encoding="utf-8")
+        result = state.workspace({"lessonId": "01", "expectedRevision": 1})
+        self.assertEqual(result["path"], "learning/workspaces/01")
+        target = self.root / result["path"] / "Introduction.kicad_sch"
+        target.write_text("my new lesson", encoding="utf-8")
+        self.assertEqual((source / "Introduction.kicad_sch").read_text(), "original blank")
 
     def test_confirmations_advance_one_step_and_only_finish_the_selected_lesson(self):
         first = self.act("confirm_step", stepId="02-01")

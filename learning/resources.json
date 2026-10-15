@@ -1,18 +1,42 @@
 {
-  "journal": [
+  "journal": [],
+  "guides": [
     {
-      "date": "2026-10-15",
-      "title": "第 1 課 從空白原理圖到圓形 LED 板",
-      "path": "learning/journal/2026-10-15-lesson-01.md",
-      "summary": "完成原理圖、圓形 PCB、ERC／DRC、Gerber 與鑽孔核對，並打包 10 個製板檔。保留實際卡關與解法。"
+      "title": "載入鑽孔與選擇顯示圖層",
+      "path": "learning/assets/gerbview-drill-guide.png",
+      "description": "第 1 課製作的操作標示圖，可在第 12 課複習；按鈕位置須以當前畫面再核對。"
+    },
+    {
+      "title": "辨認鑽孔與銅焊墊",
+      "path": "learning/assets/gerbview-alignment-guide.png",
+      "description": "淺桃色圓是鑽孔位置；以顯示開關比較，觀察是否位於焊墊中央。"
+    },
+    {
+      "title": "圓未成為板框時的圖層",
+      "path": "learning/assets/lesson-01-circle-wrong-layer.png",
+      "description": "學員原始截圖：圓當時在 F.Cu。後續改到 Edge.Cuts，才形成圓形板。"
+    },
+    {
+      "title": "完成的圓形板 3D",
+      "path": "learning/assets/lesson-01-round-board-3d.png",
+      "description": "學員原始截圖：Edge.Cuts 修正後的圓形電路板。"
+    },
+    {
+      "title": "DRC 結果",
+      "path": "learning/assets/lesson-01-drc-passed.png",
+      "description": "學員原始截圖：0 錯誤、0 警告、0 未連接；其他檢查項需分別閱讀。"
+    },
+    {
+      "title": "實際孔位對齊畫面",
+      "path": "learning/assets/lesson-01-drill-aligned.png",
+      "description": "學員原始截圖：LED 的兩孔與一個導通孔清楚位於焊墊中央；全六孔另有輸出座標檢查。"
     }
   ],
-  "guides": [
-    {"title": "載入鑽孔與選擇顯示圖層", "path": "learning/assets/gerbview-drill-guide.png", "description": "第 1 課製作的操作標示圖，可在第 12 課複習；按鈕位置須以當前畫面再核對。"},
-    {"title": "辨認鑽孔與銅焊墊", "path": "learning/assets/gerbview-alignment-guide.png", "description": "淺桃色圓是鑽孔位置；以顯示開關比較，觀察是否位於焊墊中央。"},
-    {"title": "圓未成為板框時的圖層", "path": "learning/assets/lesson-01-circle-wrong-layer.png", "description": "學員原始截圖：圓當時在 F.Cu。後續改到 Edge.Cuts，才形成圓形板。"},
-    {"title": "完成的圓形板 3D", "path": "learning/assets/lesson-01-round-board-3d.png", "description": "學員原始截圖：Edge.Cuts 修正後的圓形電路板。"},
-    {"title": "DRC 結果", "path": "learning/assets/lesson-01-drc-passed.png", "description": "學員原始截圖：0 錯誤、0 警告、0 未連接；其他檢查項需分別閱讀。"},
-    {"title": "實際孔位對齊畫面", "path": "learning/assets/lesson-01-drill-aligned.png", "description": "學員原始截圖：LED 的兩孔與一個導通孔清楚位於焊墊中央；全六孔另有輸出座標檢查。"}
+  "examples": [
+    {
+      "title": "LED 圓形板完成示範與問答解法",
+      "path": "docs/examples/lesson-01.md",
+      "summary": "公開教學範例，供參考；不會匯入個人進度。"
+    }
   ]
 }

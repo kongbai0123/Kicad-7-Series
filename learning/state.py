@@ -15,6 +15,7 @@ REPO = Path(__file__).resolve().parent.parent
 LEARNING = REPO / "learning"
 PROGRESS = LEARNING / "progress.json"
 _thread_lock = threading.RLock()
+_lock_local = threading.local()
 
 
 class StateError(Exception):
@@ -56,6 +57,9 @@ def locked():
     """Share an OS lock with the server and the tutor's command line tool."""
     LEARNING.mkdir(exist_ok=True)
     with _thread_lock:
+        if getattr(_lock_local, "held", False):
+            yield
+            return
         with (LEARNING / ".progress.lock").open("a+b") as handle:
             handle.seek(0, 2)
             if handle.tell() == 0:
@@ -78,8 +82,10 @@ def locked():
                         raise StateError("進度正在儲存，請稍候再試。", 409)
                     time.sleep(0.05)
             try:
+                _lock_local.held = True
                 yield
             finally:
+                _lock_local.held = False
                 handle.seek(0)
                 if os.name == "nt":
                     import msvcrt
@@ -90,6 +96,18 @@ def locked():
 
 
 def progress():
+    if not PROGRESS.exists():
+        with locked():
+            if not PROGRESS.exists():
+                template = read_json(LEARNING / "progress.template.json")
+                lessons = catalog()["lessons"]
+                value = {**template, "revision": 1, "updatedAt": now(),
+                         "activeLesson": lessons[0]["id"], "skillsPracticed": [],
+                         "lessons": {lesson["id"]: {
+                             "status": "not_started", "currentStep": lesson["steps"][0]["id"],
+                             "completedSteps": [], "notes": "", "evidence": [], "workspace": None
+                         } for lesson in lessons}}
+                _atomic_json(PROGRESS, value)
     value = read_json(PROGRESS)
     if value.get("schemaVersion") != 1 or not isinstance(value.get("revision"), int):
         raise StateError("進度檔格式不正確，請由對話協助檢查。", 500)
@@ -197,7 +215,7 @@ def workspace(payload):
         if type(payload.get("expectedRevision")) is not int or payload["expectedRevision"] != before["revision"]:
             raise StateError("進度已有更新，請重新整理後再開啟練習。", 409)
         source = safe_path(lesson["folder"])
-        relative = lesson["folder"] if lesson_id == "01" else f"learning/workspaces/{lesson_id}"
+        relative = f"learning/workspaces/{lesson_id}"
         target = safe_path(relative)
         created = False
         if not target.exists():
@@ -230,11 +248,36 @@ def workspace(payload):
         return {"progress": after, "path": relative, "created": created}
 
 
+def migrate_intro_workspace(expected_revision):
+    """Preserve a legacy learner design before restoring the upstream source."""
+    with locked():
+        before = progress()
+        if expected_revision != before["revision"]:
+            raise StateError("進度已有更新，請重新讀取後再遷移。", 409)
+        lesson = lesson_by_id("01")
+        previous = before["lessons"]["01"].get("workspace")
+        if previous != lesson["folder"]:
+            raise StateError("本機沒有需要遷移的舊版第 1 課工作路徑。")
+        source = safe_path(previous)
+        relative = "learning/workspaces/01"
+        target = safe_path(relative)
+        if target.exists():
+            raise StateError("第 1 課副本已存在；為保留成果，請先核對，不自動覆蓋。")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, target, ignore=shutil.ignore_patterns("*.lck", ".history", "*-backups"))
+        _atomic_json(target / "learning-workspace.json", {
+            "lessonId": "01", "source": previous, "createdAt": now(), "migration": "legacy-intro"})
+        after = json.loads(json.dumps(before))
+        after["lessons"]["01"]["workspace"] = relative
+        _save(before, after, {"action": "migrate_intro_workspace", "lessonId": "01", "path": relative, "actor": "tutor"})
+        return after
+
+
 def open_target(lesson_id, target):
     lesson = lesson_by_id(lesson_id)
     state = progress()["lessons"][lesson_id]
     relative = state.get("workspace")
-    expected = lesson["folder"] if lesson_id == "01" else f"learning/workspaces/{lesson_id}"
+    expected = f"learning/workspaces/{lesson_id}"
     if relative != expected:
         raise StateError("請先建立本課練習副本。")
     folder = safe_path(relative)

@@ -195,14 +195,14 @@
     const mainCard = completed
       ? `<section class="completion-panel" aria-labelledby="completion-title"><div class="completion-heading"><span class="completion-symbol">${icon('check')}</span><div><h3 id="completion-title" tabindex="-1">這堂課已完成</h3><p>以下是你已經實際完成的內容。</p></div></div><ul class="criteria-list">${criteria}</ul>${renderOutputLinks(lesson)}${next ? `<div class="next-course"><p>下一堂：第 ${escapeHtml(next.id)} 課 ${escapeHtml(next.title)}</p><button type="button" class="button button-primary" data-select="${escapeHtml(next.id)}">查看下一課</button></div>` : ''}</section>${renderCompletedSteps(lesson)}`
       : renderStep(lesson, active && progress.status === 'in_progress');
-    return `<header class="lesson-heading"><div class="heading-meta"><span class="eyebrow">課程 ${escapeHtml(lesson.id)}</span>${statusBadge(progress.status)}${lesson.stage ? `<span class="stage-label">${escapeHtml(asText(lesson.stage))}</span>` : ''}</div><h2>${escapeHtml(lesson.title)}</h2><p class="lesson-goal">${escapeHtml(asText(lesson.goal))}</p>${lesson.context ? `<details class="lesson-context"><summary>本課教材說明</summary><p>${escapeHtml(asText(lesson.context))}</p></details>` : ''}<div class="lesson-tools" aria-label="本課操作工具"><button type="button" class="button button-secondary" data-action="open-project">${icon('open')}開啟練習專案</button><button type="button" class="button button-secondary" data-action="copy-resume">${icon('copy')}複製接續訊息</button><p>把接續訊息貼到 Codex，就能依這一步繼續問答。</p></div></header>${session}<div class="content-grid"><div class="primary-column">${mainCard}${renderNotes(lesson)}</div><aside class="secondary-column" aria-label="練習與教學資源">${renderMedia(lesson)}${renderWorkspace(lesson)}${!completed && criteria ? `<section class="panel"><h3>本課完成的標準</h3><ul class="criteria-list">${criteria}</ul></section>` : ''}${renderFiles(lesson)}</aside></div>`;
+    return `<header class="lesson-heading"><div class="heading-meta"><span class="eyebrow">課程 ${escapeHtml(lesson.id)}</span>${statusBadge(progress.status)}${lesson.stage ? `<span class="stage-label">${escapeHtml(asText(lesson.stage))}</span>` : ''}</div><h2>${escapeHtml(lesson.title)}</h2><p class="lesson-goal">${escapeHtml(asText(lesson.goal))}</p>${lesson.context ? `<details class="lesson-context"><summary>本課教材說明</summary><p>${escapeHtml(asText(lesson.context))}</p></details>` : ''}<div class="lesson-tools" aria-label="本課操作工具"><button type="button" class="button button-secondary" data-action="open-project">${icon('open')}開啟練習專案</button><button type="button" class="button button-secondary" data-action="copy-resume">${icon('copy')}複製接續訊息</button><p>把接續訊息貼到 AI 助教，就能依這一步繼續問答。</p></div></header>${session}<div class="content-grid"><div class="primary-column">${mainCard}${renderNotes(lesson)}</div><aside class="secondary-column" aria-label="練習與教學資源">${renderMedia(lesson)}${renderWorkspace(lesson)}${!completed && criteria ? `<section class="panel"><h3>本課完成的標準</h3><ul class="criteria-list">${criteria}</ul></section>` : ''}${renderFiles(lesson)}</aside></div>`;
   }
 
   function renderStep(lesson, canConfirm) {
     const step = currentStep(lesson);
-    if (!step) return '<section class="panel"><h3>這堂課還沒有操作步驟</h3><p class="panel-subtitle">請在 Codex 對話中一起補充本課內容。</p></section>';
+    if (!step) return '<section class="panel"><h3>這堂課還沒有操作步驟</h3><p class="panel-subtitle">請在 AI 助教 對話中一起補充本課內容。</p></section>';
     const stepIndex = (lesson.steps || []).findIndex((candidate) => candidate.id === step.id);
-    return `<section class="panel step-panel" aria-labelledby="step-title"><div class="step-top"><div class="step-meta"><span class="eyebrow">這次只做這一步</span><span>第 ${stepIndex + 1} / ${(lesson.steps || []).length} 步 · 已完成 ${stepCount(lesson)} 步</span></div><h3 id="step-title" tabindex="-1">${escapeHtml(step.title)}</h3></div><div class="step-body"><p class="section-label">照著操作</p>${textBlock(step.action)}${renderGuide(step)}${renderFigures(step)}<div class="success-check"><p class="section-label">${icon('check')}做到這樣就可以繼續</p>${textBlock(step.success)}</div>${renderQuiz(step)}${renderCheck(step, canConfirm)}<div class="step-actions"><button type="button" class="button button-primary" data-action="confirm" data-step="${escapeHtml(step.id)}"${canConfirm && quizPassed(step) && !state.checking ? '' : ' disabled'}${canConfirm ? '' : ' data-needs-start="true"'}>${icon('check')}我做完了，記錄進度</button><p class="small-hint">${!canConfirm ? '先按上方「開始本課」或「接續本課」，再記錄完成。' : !quizPassed(step) ? '先回答上方的小問題，再記錄完成。' : (step.checks || []).length ? '按下後會先自動檢查練習檔，通過才記錄。進度會同步給 Codex。' : '確認已看到上方的成功結果，再按這個按鈕。進度會同步給 Codex。'}</p></div>${step.help ? `<details class="step-help"><summary>找不到按鈕或畫面不同？</summary>${textBlock(step.help)}<p class="small-hint">仍不確定時，複製接續訊息到 Codex，並附上目前畫面。</p></details>` : ''}</div></section>`;
+    return `<section class="panel step-panel" aria-labelledby="step-title"><div class="step-top"><div class="step-meta"><span class="eyebrow">這次只做這一步</span><span>第 ${stepIndex + 1} / ${(lesson.steps || []).length} 步 · 已完成 ${stepCount(lesson)} 步</span></div><h3 id="step-title" tabindex="-1">${escapeHtml(step.title)}</h3></div><div class="step-body"><p class="section-label">照著操作</p>${textBlock(step.action)}${renderGuide(step)}${renderFigures(step)}<div class="success-check"><p class="section-label">${icon('check')}做到這樣就可以繼續</p>${textBlock(step.success)}</div>${renderQuiz(step)}${renderCheck(step, canConfirm)}<div class="step-actions"><button type="button" class="button button-primary" data-action="confirm" data-step="${escapeHtml(step.id)}"${canConfirm && quizPassed(step) && !state.checking ? '' : ' disabled'}${canConfirm ? '' : ' data-needs-start="true"'}>${icon('check')}我做完了，記錄進度</button><p class="small-hint">${!canConfirm ? '先按上方「開始本課」或「接續本課」，再記錄完成。' : !quizPassed(step) ? '先回答上方的小問題，再記錄完成。' : (step.checks || []).length ? '按下後會先自動檢查練習檔，通過才記錄。進度會同步給 AI 助教。' : '確認已看到上方的成功結果，再按這個按鈕。進度會同步給 AI 助教。'}</p></div>${step.help ? `<details class="step-help"><summary>找不到按鈕或畫面不同？</summary>${textBlock(step.help)}<p class="small-hint">仍不確定時，複製接續訊息到 AI 助教，並附上目前畫面。</p></details>` : ''}</div></section>`;
   }
 
   function renderGuide(step) {
@@ -265,14 +265,13 @@
   function renderNotes(lesson) {
     const notes = asText(getProgress(lesson.id).notes);
     const draft = state.drafts.get(lesson.id) || '';
-    return `<section class="panel"><form class="note-form" data-note-form><label for="step-note">記下操作結果或卡住的地方</label><p class="panel-subtitle">更新目前筆記摘要；歷次紀錄保存在專案中。需要教學協助時，再貼接續訊息到 Codex。</p><textarea id="step-note" data-note-input rows="3" placeholder="例如：已找到 Edge.Cuts，但不知道如何把圓形改到這一層。"${state.busy ? ' disabled' : ''}>${escapeHtml(draft)}</textarea><div class="note-footer"><p>保存在專案內，與 Codex 共用。</p><button type="submit" class="button button-secondary button-small" data-save-note${draft.trim() ? '' : ' disabled'}>儲存筆記</button></div></form>${notes ? `<details class="saved-notes"><summary>查看目前筆記摘要</summary><pre>${escapeHtml(notes)}</pre></details>` : ''}</section>`;
+    return `<section class="panel"><form class="note-form" data-note-form><label for="step-note">記下操作結果或卡住的地方</label><p class="panel-subtitle">更新目前筆記摘要；歷次紀錄保存在專案中。需要教學協助時，再貼接續訊息到 AI 助教。</p><textarea id="step-note" data-note-input rows="3" placeholder="例如：已找到 Edge.Cuts，但不知道如何把圓形改到這一層。"${state.busy ? ' disabled' : ''}>${escapeHtml(draft)}</textarea><div class="note-footer"><p>保存在專案內，與 AI 助教 共用。</p><button type="submit" class="button button-secondary button-small" data-save-note${draft.trim() ? '' : ' disabled'}>儲存筆記</button></div></form>${notes ? `<details class="saved-notes"><summary>查看目前筆記摘要</summary><pre>${escapeHtml(notes)}</pre></details>` : ''}</section>`;
   }
 
   function renderWorkspace(lesson) {
     const progress = getProgress(lesson.id);
-    const isFirst = lesson.id === '01';
-    const hasWorkspace = Boolean(progress.workspace) || isFirst;
-    return `<section class="panel workspace-panel"><h3>實際操作的檔案</h3><p>${isFirst ? '第 01 課接續你已完成的專案與製板檔。' : hasWorkspace ? '繼續使用本課練習副本，變更會留在自己的練習中。' : '使用頁首「開啟練習專案」，會建立本課練習副本並記錄為開始學習。'}</p><div class="workspace-actions"><button type="button" class="button button-quiet button-small" data-action="open-folder"${hasWorkspace ? '' : ' disabled data-needs-start="true"'}>${icon('folder')}開啟練習資料夾</button></div>${progress.workspace ? `<span class="workspace-path">${escapeHtml(progress.workspace)}</span>` : ''}</section>`;
+    const hasWorkspace = Boolean(progress.workspace);
+    return `<section class="panel workspace-panel"><h3>實際操作的檔案</h3><p>${hasWorkspace ? '繼續使用本課練習副本，變更會留在自己的練習中。' : '使用頁首「開啟練習專案」，會建立本課練習副本並記錄為開始學習。'}</p><div class="workspace-actions"><button type="button" class="button button-quiet button-small" data-action="open-folder"${hasWorkspace ? '' : ' disabled data-needs-start="true"'}>${icon('folder')}開啟練習資料夾</button></div>${progress.workspace ? `<span class="workspace-path">${escapeHtml(progress.workspace)}</span>` : ''}</section>`;
   }
 
   function mediaLink(link) {
@@ -322,11 +321,17 @@
     }).join('')}</div>`;
   }
 
+  function renderExampleRecords() {
+    const examples = state.data.examples || [];
+    if (!examples.length) return '';
+    return `<section class="journal-section"><h3>公開完成範例</h3><p>以下是示範紀錄，不會計入你的學習進度。</p><div class="journal-list">${examples.map(entry => `<article class="journal-card"><h4>${escapeHtml(entry.title)}</h4><p>${escapeHtml(entry.summary || '')}</p><a class="button button-secondary button-small" href="${fileUrl(entry.path, true)}" target="_blank" rel="noopener">閱讀示範紀錄</a></article>`).join('')}</div></section>`;
+  }
+
   function renderJournal() {
     const journal = state.data.journal || [];
     const guides = state.data.guides || [];
     const noted = lessons().filter((lesson) => asText(getProgress(lesson.id).notes).trim());
-    return `<header class="page-heading"><div class="eyebrow">把學會的內容留下來</div><h2>學習紀錄與操作圖解</h2><p>收錄這次問答中遇到的問題、解法，以及後續各課的操作筆記。</p></header><section class="journal-section"><h3>課程學習紀錄</h3><div class="journal-list">${journal.length ? journal.map((entry) => `<article class="journal-card">${entry.date ? `<time datetime="${escapeHtml(entry.date)}">${escapeHtml(entry.date)}</time>` : ''}<h4>${escapeHtml(entry.title)}</h4><p>${escapeHtml(asText(entry.summary))}</p><a class="button button-secondary button-small" href="${fileUrl(entry.path, true)}" target="_blank" rel="noopener">閱讀完整紀錄</a></article>`).join('') : '<p class="panel-subtitle">完成操作後，學習紀錄會集中顯示在這裡。</p>'}</div></section>${guides.length ? `<section class="journal-section"><h3>對照畫面操作</h3><div class="guide-grid">${guides.map((guide) => `<article class="guide-card"><a class="guide-image" href="${fileUrl(guide.path)}" target="_blank" rel="noopener" aria-label="放大查看：${escapeHtml(guide.title)}"><img src="${fileUrl(guide.path)}" alt="${escapeHtml(guide.title)}" loading="lazy"></a><div class="guide-copy"><h4>${escapeHtml(guide.title)}</h4><p>${escapeHtml(asText(guide.description))}</p><a href="${fileUrl(guide.path)}" target="_blank" rel="noopener">放大查看圖解</a></div></article>`).join('')}</div></section>` : ''}<section class="journal-section"><h3>各課目前筆記摘要</h3>${noted.length ? `<div class="journal-note-list">${noted.map((lesson) => `<article class="journal-note"><h4>課程 ${escapeHtml(lesson.id)} · ${escapeHtml(lesson.title)}</h4><pre class="record-note">${escapeHtml(asText(getProgress(lesson.id).notes))}</pre></article>`).join('')}</div>` : '<p class="panel-subtitle">尚未新增筆記。可在「本次操作」記下觀察結果或卡住的地方。</p>'}</section>`;
+    return `<header class="page-heading"><div class="eyebrow">把學會的內容留下來</div><h2>學習紀錄與操作圖解</h2><p>收錄這次問答中遇到的問題、解法，以及後續各課的操作筆記。</p></header><section class="journal-section"><h3>課程學習紀錄</h3><div class="journal-list">${journal.length ? journal.map((entry) => `<article class="journal-card">${entry.date ? `<time datetime="${escapeHtml(entry.date)}">${escapeHtml(entry.date)}</time>` : ''}<h4>${escapeHtml(entry.title)}</h4><p>${escapeHtml(asText(entry.summary))}</p><a class="button button-secondary button-small" href="${fileUrl(entry.path, true)}" target="_blank" rel="noopener">閱讀完整紀錄</a></article>`).join('') : '<p class="panel-subtitle">完成操作後，學習紀錄會集中顯示在這裡。</p>'}</div></section>${renderExampleRecords()}${guides.length ? `<section class="journal-section"><h3>對照畫面操作</h3><div class="guide-grid">${guides.map((guide) => `<article class="guide-card"><a class="guide-image" href="${fileUrl(guide.path)}" target="_blank" rel="noopener" aria-label="放大查看：${escapeHtml(guide.title)}"><img src="${fileUrl(guide.path)}" alt="${escapeHtml(guide.title)}" loading="lazy"></a><div class="guide-copy"><h4>${escapeHtml(guide.title)}</h4><p>${escapeHtml(asText(guide.description))}</p><a href="${fileUrl(guide.path)}" target="_blank" rel="noopener">放大查看圖解</a></div></article>`).join('')}</div></section>` : ''}<section class="journal-section"><h3>各課目前筆記摘要</h3>${noted.length ? `<div class="journal-note-list">${noted.map((lesson) => `<article class="journal-note"><h4>課程 ${escapeHtml(lesson.id)} · ${escapeHtml(lesson.title)}</h4><pre class="record-note">${escapeHtml(asText(getProgress(lesson.id).notes))}</pre></article>`).join('')}</div>` : '<p class="panel-subtitle">尚未新增筆記。可在「本次操作」記下觀察結果或卡住的地方。</p>'}</section>`;
   }
 
   async function mutate(action, extra = {}) {
@@ -360,7 +365,7 @@
       showNotice(error.message, 'warning', true);
     } else if (error.status === 409) {
       await bootstrap({ quiet: true, force: true });
-      showNotice('進度已由其他視窗或 Codex 更新。已載入最新資料；請確認目前步驟，再重新操作。', 'warning', true);
+      showNotice('進度已由其他視窗或 AI 助教 更新。已載入最新資料；請確認目前步驟，再重新操作。', 'warning', true);
     } else showNotice(error.message || '操作沒有完成，請稍後重試。', 'error', true);
   }
 
@@ -407,7 +412,7 @@
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(message);
-      showNotice('接續訊息已複製。貼到目前這個 Codex 對話，即可依本課進度繼續教學。');
+      showNotice('接續訊息已複製。貼到目前這個 AI 助教 對話，即可依本課進度繼續教學。');
     } catch {
       state.clipboardTrigger = trigger;
       elements.clipboardText.value = message;

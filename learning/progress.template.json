@@ -1,26 +1,14 @@
 {
   "schemaVersion": 1,
-  "revision": 2,
-  "updatedAt": "2026-10-15T11:04:11+08:00",
-  "activeLesson": "02",
+  "revision": 1,
+  "updatedAt": null,
+  "activeLesson": "01",
   "learner": {
     "language": "zh-Hant",
-    "kicadVersion": "10.0.7",
-    "teachingStyle": "一次一小步，提供成功畫面；以截圖問答確認後再往下。"
+    "kicadVersion": "10",
+    "teachingStyle": "一次一小步，以操作結果及當前畫面確認後再繼續。"
   },
-  "skillsPracticed": [
-    "原理圖基本操作",
-    "ERC",
-    "指定封裝",
-    "PCB 匯入與排列",
-    "雙層走線與導通孔",
-    "Edge.Cuts 圓形板框",
-    "3D 檢查",
-    "DRC",
-    "Gerber／Excellon 輸出",
-    "孔位疊圖核對",
-    "ZIP 打包"
-  ],
+  "skillsPracticed": [],
   "lessons": {
     "10": {
       "status": "not_started",
@@ -71,55 +59,20 @@
       "workspace": null
     },
     "01": {
-      "status": "completed",
-      "currentStep": "01-14",
-      "completedSteps": [
-        "01-01",
-        "01-02",
-        "01-03",
-        "01-04",
-        "01-05",
-        "01-06",
-        "01-07",
-        "01-08",
-        "01-09",
-        "01-10",
-        "01-11",
-        "01-12",
-        "01-13",
-        "01-14"
-      ],
-      "notes": "學員已確認六孔對齊，並完成 Introduction-Gerber.zip；工具另驗證 ZIP 內 10 個檔案且 CRC 正常。",
-      "evidence": [
-        {
-          "at": "2026-10-15",
-          "kind": "user_confirmed",
-          "summary": "完成 3V 電池、1k 電阻與 LED 原理圖、PCB、圓形板框及製板輸出；六孔已目視確認對齊，ZIP 內有 10 檔。"
-        },
-        {
-          "at": "2026-10-15",
-          "kind": "screenshot_visible",
-          "summary": "原始截圖可見圓板 3D、DRC 零錯誤與孔位同心。",
-          "source": "learning/assets/lesson-01-drill-aligned.png"
-        },
-        {
-          "at": "2026-10-15",
-          "kind": "tool_verified",
-          "summary": "Python zipfile 實際開啟 ZIP：10 entries、testzip() 為 None；驗證檔案清單與 CRC。",
-          "source": "learning/evidence/lesson-01-verification.json"
-        }
-      ],
-      "workspace": "1_Introduction",
-      "completedAt": "2026-10-15"
+      "status": "not_started",
+      "currentStep": "01-01",
+      "completedSteps": [],
+      "notes": "",
+      "evidence": [],
+      "workspace": null
     },
     "02": {
-      "status": "in_progress",
+      "status": "not_started",
       "currentStep": "02-01",
       "completedSteps": [],
       "notes": "",
       "evidence": [],
-      "workspace": "learning/workspaces/02",
-      "startedAt": "2026-10-15T11:04:11+08:00"
+      "workspace": null
     },
     "03": {
       "status": "not_started",

@@ -23,12 +23,12 @@
       "folder": "1_Introduction",
       "stage": "入門練習",
       "goal": "以 3 V 電池、1 kΩ 電阻與 LED 完成原理圖、圓形 PCB、檢查、製板輸出及 ZIP。",
-      "context": "本課是本次對話已完成的入門實作回顧。原系列的 Diya 主專案從後續章節展開；本課練過的 ERC、DRC 與 Gerber 技能，不會自動把第 05、11、12 課標記為完成。",
+      "context": "本課從空白教材副本開始，製作三元件 LED 板；完成範例另放在 docs/examples/led-board，範例不代表你的進度。後續 Diya 章節各自獨立練習。",
       "completionCriteria": [
         "原理圖包含 BT1、R1、D1，R1 的參考編號與 1k 數值分開。",
         "PCB 僅有一個有效圓形 Edge.Cuts 外框；DRC 無待處理錯誤與未連接。",
         "七個 Gerber、PTH／NPTH 鑽孔檔及 job 資訊檔已匯出，六個鍍通孔位置核對一致。",
-        "Introduction-Gerber.zip 內有 10 個輸出檔；使用者已確認孔位對齊與打包完成。"
+        "自己的 Introduction-Gerber.zip 包含 10 個輸出檔，已目視確認孔位及打包內容。"
       ],
       "files": [
         {
@@ -47,19 +47,19 @@
           "type": "pcb"
         },
         {
-          "label": "本次製板 ZIP",
-          "path": "1_Introduction/gerber/Introduction-Gerber.zip",
-          "type": "output"
+          "label": "完成範例：製板 ZIP",
+          "path": "docs/examples/led-board/gerber/Introduction-Gerber.zip",
+          "type": "reference"
         },
         {
-          "label": "Gerber job 資訊",
-          "path": "1_Introduction/gerber/Introduction-job.gbrjob",
-          "type": "output"
+          "label": "完成範例：Gerber job 資訊",
+          "path": "docs/examples/led-board/gerber/Introduction-job.gbrjob",
+          "type": "reference"
         },
         {
-          "label": "鍍通孔鑽孔檔",
-          "path": "1_Introduction/gerber/Introduction-PTH.drl",
-          "type": "output"
+          "label": "完成範例：鍍通孔鑽孔檔",
+          "path": "docs/examples/led-board/gerber/Introduction-PTH.drl",
+          "type": "reference"
         }
       ],
       "media": [
@@ -102,7 +102,7 @@
           "id": "01-05",
           "title": "執行 ERC",
           "action": "開啟電氣規則檢查；執行檢查並查看錯誤、警告與違規清單。",
-          "success": "本次練習結果為 0 錯誤、0 警告。",
+          "success": "本次執行 ERC 後沒有待處理的錯誤；警告須逐項確認原因。",
           "help": "先看第一條實際訊息；若參考編號錯誤先修參考，再重新檢查。不要把檢查類別被忽略當成已檢查通過。"
         },
         {
@@ -144,7 +144,7 @@
           "id": "01-11",
           "title": "執行 DRC",
           "action": "重新填充銅區後執行設計規則檢查；查看錯誤、警告與未連接項目，並核對原理圖一致性。",
-          "success": "本次結果為 0 錯誤、0 警告、0 未連接；另已用 CLI 核對原理圖一致性。",
+          "success": "DRC 沒有待處理錯誤與未連接；依當次檢查結果核對原理圖一致性。",
           "help": "3D 外觀看起來正常不等於 DRC 通過；需要看檢查結果。對忽略的檢查項目保留說明。"
         },
         {
@@ -166,7 +166,7 @@
           "title": "打包並確認 ZIP",
           "action": "選取 gerber 資料夾內本次產生的 10 個輸出檔，建立 Introduction-Gerber.zip；開啟 ZIP 核對內容。",
           "success": "ZIP 直接含七個 .gbr、兩個 .drl 與一個 .gbrjob。",
-          "help": "避免把 ZIP 自己再包入下一個 ZIP。本次使用者已回報 10 個檔案皆在 ZIP 中；這是輸出完成，尚未代表已下單製板。"
+          "help": "選取輸出檔時避免把 ZIP 自己再包進去。完成輸出不代表已下單製板。"
         }
       ]
     },

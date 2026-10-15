@@ -1,0 +1,28 @@
+name: 問題回報 Bug report
+description: 回報學習入口、課程步驟或檢查功能的問題。
+title: "[Bug] "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 使用環境
+      description: Windows、Python、KiCad 版本及介面語言。
+    validations:
+      required: true
+  - type: input
+    id: step
+    attributes:
+      label: 課程與步驟
+      placeholder: "例如 02-01"
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 操作方式與實際結果
+      description: 請列出重現步驟，以及預期看到的結果。
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: 截圖或錯誤訊息
+      description: 如需附圖，請先移除私人路徑、金鑰及個人紀錄。
