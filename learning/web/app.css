@@ -331,3 +331,12 @@ textarea::placeholder { color: #87928d; }
   .clipboard-dialog { padding: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+.reset-box { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.reset-box.is-confirming { border: 1px solid #e3c9a0; border-radius: 8px; background: #fff8ec; padding: 12px; }
+.reset-box p { font-size: 12px; margin-bottom: 10px; }
+.reset-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.reset-section { margin-top: 28px; padding: 20px 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.reset-section h3 { font-size: 15px; margin-bottom: 6px; }
+.reset-section > p { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+.reset-section .reset-box { margin-top: 0; padding-top: 0; border-top: 0; }
+.reset-section .reset-box.is-confirming { padding: 12px; }

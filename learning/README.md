@@ -41,6 +41,7 @@
 | 空白進度範本 | [progress.template.json](progress.template.json)，新安裝從全部未開始起步。 |
 | 唯一個人進度 | `learning/progress.json`，自動建立，網頁與教師命令列共用，不納入 Git。 |
 | 個人問題與解法 | `learning/journal/`，保存操作脈絡，不納入 Git。 |
+| 重新學習的封存 | `learning/archive/<課號>-<時間>/`，內有舊練習副本與當時的進度快照，不納入 Git。 |
 | 個人檢查證據 | `learning/evidence/`，不納入 Git。 |
 | 教學圖 | [assets](assets/)，依實際畫面標示需要操作的位置。 |
 
@@ -70,5 +71,15 @@ python .\learning\manage.py status
 ```
 
 進度寫入使用 `manage.py record`；不要用文字編輯器直接修改 `progress.json`。學員確認、截圖、檔案檢查和工具驗證會依證據強度分開記錄，完成某個操作不會自動被解讀為已實際製板或點燈。
+
+## 重新學習
+
+想把一課從頭再做一次：
+
+1. 先在 KiCad 用「檔案 → 關閉專案」關掉該課專案。
+2. 在課程頁右側「實際操作的檔案」按 **重新學習本課**，再按 **確定重新開始**。要全部重來，到「課程總覽」按 **全部課程重新開始**。
+3. 該課回到第 1 步。再按「開啟練習專案」會從原教材建立全新的副本。
+
+重新開始不會刪除任何東西：舊練習副本與當時的進度、筆記、證據會封存到 `learning/archive/`，原教材與其他課程不受影響。KiCad 仍開著該課專案時會拒絕執行。命令列對應操作為 `python .\learning\manage.py reset --lesson 03 --revision <n> --yes`（`--lesson all` 為全部課程）；只有學員明確要求時才由教師執行。
 
 完整的問答、卡關與成果示範，見 [公開學習紀錄範例](../docs/examples/lesson-01.md)。自己的進度和練習成果請另行備份。

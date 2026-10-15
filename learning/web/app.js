@@ -13,6 +13,7 @@
     quiz: new Map(),
     checks: new Map(),
     checking: false,
+    confirmReset: null,
   };
   const elements = {
     content: document.getElementById('view-content'),
@@ -271,7 +272,22 @@
   function renderWorkspace(lesson) {
     const progress = getProgress(lesson.id);
     const hasWorkspace = Boolean(progress.workspace);
-    return `<section class="panel workspace-panel"><h3>實際操作的檔案</h3><p>${hasWorkspace ? '繼續使用本課練習副本，變更會留在自己的練習中。' : '使用頁首「開啟練習專案」，會建立本課練習副本並記錄為開始學習。'}</p><div class="workspace-actions"><button type="button" class="button button-quiet button-small" data-action="open-folder"${hasWorkspace ? '' : ' disabled data-needs-start="true"'}>${icon('folder')}開啟練習資料夾</button></div>${progress.workspace ? `<span class="workspace-path">${escapeHtml(progress.workspace)}</span>` : ''}</section>`;
+    return `<section class="panel workspace-panel"><h3>實際操作的檔案</h3><p>${hasWorkspace ? '繼續使用本課練習副本，變更會留在自己的練習中。' : '使用頁首「開啟練習專案」，會建立本課練習副本並記錄為開始學習。'}</p><div class="workspace-actions"><button type="button" class="button button-quiet button-small" data-action="open-folder"${hasWorkspace ? '' : ' disabled data-needs-start="true"'}>${icon('folder')}開啟練習資料夾</button></div>${progress.workspace ? `<span class="workspace-path">${escapeHtml(progress.workspace)}</span>` : ''}${renderReset(lesson.id)}</section>`;
+  }
+
+  function canReset(scope) {
+    if (scope === 'all') return lessons().some((lesson) => canReset(lesson.id));
+    const progress = getProgress(scope);
+    return progress.status !== 'not_started' || Boolean(progress.workspace) || (progress.completedSteps || []).length > 0;
+  }
+
+  function renderReset(scope) {
+    if (!canReset(scope)) return '';
+    const all = scope === 'all';
+    if (state.confirmReset !== scope) {
+      return `<div class="reset-box"><button type="button" class="button button-quiet button-small" data-action="reset-ask" data-scope="${escapeHtml(scope)}">${all ? '全部課程重新開始' : '重新學習本課'}</button></div>`;
+    }
+    return `<div class="reset-box is-confirming" role="group" aria-labelledby="reset-title-${escapeHtml(scope)}"><p id="reset-title-${escapeHtml(scope)}"><strong>${all ? '要讓全部 15 課都回到第 1 步嗎？' : '要讓本課回到第 1 步嗎？'}</strong></p><p>進度、筆記與練習副本會封存到 learning/archive/，不會刪除；原教材不受影響。重新開始前，請先在 KiCad 用「檔案 → 關閉專案」關掉${all ? '練習專案' : '本課專案'}。</p><div class="reset-actions"><button type="button" class="button button-primary button-small" data-action="reset-confirm" data-scope="${escapeHtml(scope)}">確定重新開始</button><button type="button" class="button button-quiet button-small" data-action="reset-cancel">取消</button></div></div>`;
   }
 
   function mediaLink(link) {
@@ -318,7 +334,7 @@
     return `<header class="page-heading"><div class="eyebrow">15 堂課的共同入口</div><h2>課程總覽</h2><p>${escapeHtml(state.data.catalog.versionNote || '課程依原始教材排序；操作說明依你目前使用的 KiCad 版本調整。')}</p></header><div class="overview-summary"><div><strong>${completed}<span style="font-size:15px;font-weight:400"> / ${lessons().length}</span></strong><p>堂課已完成</p></div><div><p>${learning} 堂學習中</p><p>每一步都由你的實際操作確認。</p></div></div><div class="overview-list">${lessons().map((lesson) => {
       const progress = getProgress(lesson.id);
       return `<article class="overview-card"><div class="overview-card-top"><span class="eyebrow">課程 ${escapeHtml(lesson.id)}</span>${statusBadge(progress.status)}</div><h3>${escapeHtml(lesson.title)}</h3><p>${escapeHtml(asText(lesson.goal))}</p><div class="overview-card-bottom"><span>${stepCount(lesson)} / ${(lesson.steps || []).length} 步已完成</span><button type="button" class="button button-secondary button-small" data-select="${escapeHtml(lesson.id)}">${progress.status === 'completed' ? '回看課程' : '查看本課'}</button></div></article>`;
-    }).join('')}</div>`;
+    }).join('')}</div>${canReset('all') ? `<section class="reset-section"><h3>想從頭再學一次？</h3><p>每一課都能單獨重新開始，也可以一次讓全部課程回到第 1 步。舊的練習副本與進度會先封存，不會直接刪除。</p>${renderReset('all')}</section>` : ''}`;
   }
 
   function renderExampleRecords() {
@@ -389,6 +405,29 @@
     }
   }
 
+  async function resetProgress(scope) {
+    if (state.busy || !state.data) return;
+    preserveDraft();
+    setBusy(true);
+    try {
+      const result = await request('/api/reset', { method: 'POST', body: JSON.stringify({ expectedRevision: state.data.progress.revision, lessonId: scope, confirm: true }) });
+      if (!result.progress) throw new Error('本機服務沒有回傳更新後的進度，請重新讀取。');
+      state.data.progress = result.progress;
+      state.confirmReset = null;
+      (scope === 'all' ? lessons() : [getLesson(scope)]).forEach((lesson) => {
+        state.drafts.delete(lesson.id);
+        (lesson.steps || []).forEach((step) => { state.quiz.delete(step.id); state.checks.delete(step.id); });
+      });
+      render();
+      showNotice(scope === 'all' ? '全部課程已回到第 1 步，舊的練習副本已封存。' : '本課已回到第 1 步，舊的練習副本已封存。按「開啟練習專案」會建立全新的副本。');
+    } catch (error) {
+      await handleActionError(error);
+    } finally {
+      setBusy(false);
+      render();
+    }
+  }
+
   function resumeMessage() {
     const lesson = getLesson(state.selectedLesson);
     if (!lesson) return '';
@@ -431,6 +470,7 @@
   function selectLesson(id) {
     if (!getLesson(id) || state.busy) return;
     preserveDraft();
+    state.confirmReset = null;
     state.selectedLesson = id;
     state.view = 'lesson';
     render();
@@ -443,7 +483,7 @@
     if (!button || button.disabled) return;
     if (button.dataset.lesson || button.dataset.select) { selectLesson(button.dataset.lesson || button.dataset.select); return; }
     if (button.dataset.view) {
-      preserveDraft(); state.view = button.dataset.view; render(); return;
+      preserveDraft(); state.confirmReset = null; state.view = button.dataset.view; render(); return;
     }
     switch (button.dataset.action) {
       case 'activate': void mutate('activate_lesson'); break;
@@ -453,6 +493,9 @@
       case 'open-project': void openPractice('project'); break;
       case 'open-folder': void openPractice('folder'); break;
       case 'copy-resume': void copyResume(button); break;
+      case 'reset-ask': state.confirmReset = button.dataset.scope; render(); break;
+      case 'reset-cancel': state.confirmReset = null; render(); break;
+      case 'reset-confirm': void resetProgress(button.dataset.scope); break;
       case 'close-clipboard': closeClipboard(); break;
       case 'retry': void bootstrap({ force: true }); break;
       default: break;

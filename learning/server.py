@@ -146,6 +146,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json({"check": run_check(payload)})
             if route == "/api/workspace":
                 return self.send_json(state.workspace(payload))
+            if route == "/api/reset":
+                return self.send_json(state.reset(payload))
             if route == "/api/open":
                 path = state.open_target(payload.get("lessonId"), payload.get("target"))
                 if os.name != "nt":

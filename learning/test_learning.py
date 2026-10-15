@@ -6,6 +6,7 @@ from pathlib import Path
 import tempfile
 import threading
 import unittest
+from unittest import mock
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -149,6 +150,139 @@ class LearningTests(unittest.TestCase):
         self.assertEqual(target.read_text(encoding="utf-8"), "my practice")
         self.assertEqual((self.root / "2_User Interface/User Interface.kicad_pro").read_text(encoding="utf-8"), "original")
         self.assertEqual(state.open_target("02", "project"), target)
+
+    def prepare_practice(self, text="my practice"):
+        result = state.workspace({"lessonId": "02", "expectedRevision": state.progress()["revision"]})
+        folder = self.root / result["path"]
+        (folder / "User Interface.kicad_pro").write_text(text, encoding="utf-8")
+        return folder
+
+    def reset(self, scope="02", **kwargs):
+        return state.reset({"lessonId": scope, "expectedRevision": state.progress()["revision"],
+                            "confirm": True, **kwargs})
+
+    def test_reset_archives_the_practice_copy_and_restarts_from_the_first_step(self):
+        folder = self.prepare_practice()
+        self.act("confirm_step", stepId="02-01")
+        self.act("add_note", note="卡在選單")
+        outcome = self.reset()
+        lesson = outcome["progress"]["lessons"]["02"]
+        self.assertEqual((lesson["status"], lesson["currentStep"], lesson["completedSteps"], lesson["notes"],
+                          lesson["evidence"], lesson["workspace"]), ("not_started", "02-01", [], "", [], None))
+        self.assertFalse(folder.exists())
+        archived = self.root / outcome["archived"][0]
+        self.assertEqual((archived / "workspace/User Interface.kicad_pro").read_text(encoding="utf-8"), "my practice")
+        saved = json.loads((archived / "progress-before.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved["state"]["notes"], "卡在選單")
+        self.assertEqual(saved["state"]["completedSteps"], ["02-01"])
+        self.assertEqual(outcome["progress"]["lessons"]["01"]["status"], "completed")
+        self.assertEqual((self.root / "2_User Interface/User Interface.kicad_pro").read_text(encoding="utf-8"), "original")
+        last = json.loads((state.LEARNING / "events.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+        self.assertEqual((last["action"], last["lessonId"], last["archived"]), ("reset_lesson", "02", outcome["archived"]))
+
+    def test_repeating_a_lesson_after_reset_gets_a_fresh_copy_and_keeps_the_archive(self):
+        self.prepare_practice("first attempt")
+        first = self.reset()
+        again = state.workspace({"lessonId": "02", "expectedRevision": first["progress"]["revision"]})
+        self.assertTrue(again["created"])
+        folder = self.root / again["path"]
+        self.assertEqual((folder / "User Interface.kicad_pro").read_text(encoding="utf-8"), "original")
+        (folder / "User Interface.kicad_pro").write_text("second attempt", encoding="utf-8")
+        second = self.reset()
+        self.assertNotEqual(first["archived"], second["archived"])
+        texts = sorted((self.root / name / "workspace/User Interface.kicad_pro").read_text(encoding="utf-8")
+                       for name in first["archived"] + second["archived"])
+        self.assertEqual(texts, ["first attempt", "second attempt"])
+
+    def test_reset_requires_confirmation_and_the_current_revision(self):
+        self.prepare_practice()
+        before = state.PROGRESS.read_bytes()
+        with self.assertRaises(state.StateError):
+            state.reset({"lessonId": "02", "expectedRevision": state.progress()["revision"]})
+        with self.assertRaises(state.StateError):
+            state.reset({"lessonId": "02", "expectedRevision": state.progress()["revision"], "confirm": "yes"})
+        with self.assertRaises(state.StateError) as caught:
+            state.reset({"lessonId": "02", "expectedRevision": 1, "confirm": True})
+        self.assertEqual(caught.exception.status, 409)
+        with self.assertRaises(state.StateError):
+            state.reset({"lessonId": "99", "expectedRevision": state.progress()["revision"], "confirm": True})
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+        self.assertFalse((state.LEARNING / "archive").exists())
+
+    def test_reset_is_refused_while_kicad_still_has_the_project_open(self):
+        folder = self.prepare_practice()
+        (folder / "~User Interface.kicad_sch.lck").write_text("{}", encoding="utf-8")
+        before = state.PROGRESS.read_bytes()
+        with self.assertRaises(state.StateError) as caught:
+            self.reset()
+        self.assertEqual(caught.exception.status, 423)
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+        self.assertTrue((folder / "User Interface.kicad_pro").exists())
+        self.assertFalse((state.LEARNING / "archive").exists())
+        outcome = state.reset({"lessonId": "02", "expectedRevision": state.progress()["revision"],
+                               "confirm": True}, ignore_locks=True)
+        self.assertFalse(folder.exists())
+        self.assertEqual(outcome["progress"]["lessons"]["02"]["status"], "not_started")
+
+    def test_reset_with_nothing_to_undo_is_rejected_without_writing(self):
+        before = state.PROGRESS.read_bytes()
+        with self.assertRaises(state.StateError):
+            self.reset()
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+
+    def test_reset_never_moves_original_course_material(self):
+        source = self.root / "1_Introduction"
+        source.mkdir()
+        (source / "Introduction.kicad_sch").write_text("upstream", encoding="utf-8")
+        outcome = self.reset("01")
+        self.assertEqual(outcome["progress"]["lessons"]["01"]["status"], "not_started")
+        self.assertIsNone(outcome["progress"]["lessons"]["01"]["workspace"])
+        self.assertEqual((source / "Introduction.kicad_sch").read_text(encoding="utf-8"), "upstream")
+        self.assertFalse((self.root / outcome["archived"][0] / "workspace").exists())
+
+    def test_reset_all_restarts_every_lesson_and_archives_each_practice_copy(self):
+        folder = self.prepare_practice()
+        outcome = self.reset("all")
+        lessons = outcome["progress"]["lessons"]
+        self.assertTrue(all(item["status"] == "not_started" and not item["completedSteps"]
+                            and item["workspace"] is None for item in lessons.values()))
+        self.assertEqual(outcome["progress"]["activeLesson"], "01")
+        self.assertEqual(len(outcome["archived"]), 2)
+        self.assertFalse(folder.exists())
+
+    def test_failed_reset_restores_progress_and_practice_copy(self):
+        folder = self.prepare_practice()
+        before = state.PROGRESS.read_bytes()
+        with mock.patch.object(state, "_save", side_effect=OSError("disk full")):
+            with self.assertRaises(state.StateError):
+                self.reset()
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+        self.assertEqual((folder / "User Interface.kicad_pro").read_text(encoding="utf-8"), "my practice")
+        archive = state.LEARNING / "archive"
+        self.assertTrue(not archive.exists() or not any(archive.iterdir()))
+
+    def test_http_reset_requires_confirmation_then_restarts_the_lesson(self):
+        self.prepare_practice()
+        httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+        url = f"http://127.0.0.1:{httpd.server_port}/api/reset"
+        def post(**extra):
+            body = json.dumps({"lessonId": "02", "expectedRevision": state.progress()["revision"], **extra}).encode()
+            return urlopen(Request(url, data=body, headers={"Content-Type": "application/json"}))
+        try:
+            with self.assertRaises(HTTPError) as caught:
+                post()
+            self.assertEqual(caught.exception.code, 400)
+            self.assertEqual(state.progress()["lessons"]["02"]["status"], "in_progress")
+            with post(confirm=True) as response:
+                result = json.load(response)
+            self.assertEqual(result["progress"]["lessons"]["02"]["status"], "not_started")
+            self.assertEqual(len(result["archived"]), 1)
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+            thread.join(timeout=3)
 
     def test_failed_check_blocks_confirmation_and_passing_check_is_recorded(self):
         catalog = json.loads((state.LEARNING / "catalog.json").read_text(encoding="utf-8"))

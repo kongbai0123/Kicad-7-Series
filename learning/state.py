@@ -248,6 +248,97 @@ def workspace(payload):
         return {"progress": after, "path": relative, "created": created}
 
 
+def _kicad_locks(folder: Path):
+    """KiCad writes ~<file>.lck next to a design while it is open."""
+    return sorted({item.name for item in folder.rglob("*.lck") if item.name.startswith("~")})
+
+
+def reset(payload, *, actor="learner", ignore_locks=False):
+    """Return one lesson (or every lesson) to its first step.
+
+    The practice copy and the lesson's recorded progress are archived under
+    learning/archive/ instead of being deleted, so a repeat attempt never costs
+    earlier work. The original course folders are never touched.
+    """
+    scope = payload.get("lessonId")
+    if payload.get("confirm") is not True:
+        raise StateError("重新開始前需要先確認；進度與練習副本會封存，不會直接刪除。")
+    lessons = catalog()["lessons"]
+    if scope == "all":
+        targets = lessons
+    else:
+        targets = [lesson_by_id(scope)]
+    with locked():
+        before = progress()
+        if type(payload.get("expectedRevision")) is not int or payload["expectedRevision"] != before["revision"]:
+            raise StateError("進度已有更新，請重新整理後再重新開始。", 409)
+        plan = []
+        for lesson in targets:
+            lesson_id = lesson["id"]
+            current = before["lessons"][lesson_id]
+            managed = f"learning/workspaces/{lesson_id}"
+            folder = None
+            if current.get("workspace") == managed:
+                candidate = safe_path(managed)
+                if candidate.is_symlink() or (candidate.exists() and not candidate.is_dir()):
+                    raise StateError(f"第 {lesson_id} 課的練習副本位置不正確，已停止。", 500)
+                if candidate.exists():
+                    folder = candidate
+            if folder is not None and not ignore_locks:
+                locks = _kicad_locks(folder)
+                if locks:
+                    raise StateError(
+                        f"第 {lesson_id} 課的練習專案似乎還在 KiCad 開著（{'、'.join(locks)}）。"
+                        "請先在 KiCad 選「檔案 → 關閉專案」，再重新開始。", 423)
+            touched = (folder is not None or current.get("workspace") or current["status"] != "not_started"
+                       or current.get("completedSteps") or current.get("notes") or current.get("evidence"))
+            if touched:
+                plan.append((lesson, current, folder))
+        if not plan:
+            raise StateError("沒有需要重新開始的內容。")
+
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        archive_root = LEARNING / "archive"
+        moved, created, archived = [], [], []
+        try:
+            for lesson, current, folder in plan:
+                destination = archive_root / f"{lesson['id']}-{stamp}"
+                suffix = 1
+                while destination.exists():
+                    suffix += 1
+                    destination = archive_root / f"{lesson['id']}-{stamp}-{suffix}"
+                destination.mkdir(parents=True)
+                created.append(destination)
+                _atomic_json(destination / "progress-before.json",
+                             {"lessonId": lesson["id"], "archivedAt": now(), "state": current})
+                if folder is not None:
+                    shutil.move(str(folder), str(destination / "workspace"))
+                    moved.append((destination / "workspace", folder))
+                archived.append(destination.relative_to(REPO).as_posix())
+            after = json.loads(json.dumps(before))
+            for lesson, _current, _folder in plan:
+                after["lessons"][lesson["id"]] = {
+                    "status": "not_started", "currentStep": lesson["steps"][0]["id"],
+                    "completedSteps": [], "notes": "", "evidence": [], "workspace": None}
+            if scope == "all":
+                after["activeLesson"] = lessons[0]["id"]
+                after["skillsPracticed"] = []
+            _save(before, after, {"action": "reset_all" if scope == "all" else "reset_lesson",
+                                  "lessonId": scope, "actor": actor, "archived": archived})
+        except Exception as exc:
+            for source, original in reversed(moved):
+                try:
+                    shutil.move(str(source), str(original))
+                except OSError:
+                    pass
+            for destination in created:
+                shutil.rmtree(destination, ignore_errors=True)
+            if isinstance(exc, StateError):
+                raise
+            raise StateError(f"重新開始沒有完成，已還原原本的進度與練習副本：{exc}", 500) from exc
+        return {"progress": after, "archived": archived}
+
+
 def migrate_intro_workspace(expected_revision):
     """Preserve a legacy learner design before restoring the upstream source."""
     with locked():

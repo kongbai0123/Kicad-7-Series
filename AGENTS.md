@@ -40,7 +40,9 @@
 
 `learning/progress.json` 是唯一的進度來源。不要在另一份表格、網頁儲存空間或對話摘要維持獨立的完成度。`catalog.json` 管課程定義，journal 管學習脈絡與排除問題的經驗。
 
-個人 `progress.json`、`journal/`、`evidence/` 與 `workspaces/` 不納入版本庫。公開紀錄僅作範例，放在 `docs/examples/`，不得拿來初始化個人完成度。引導文案使用「AI 助教對話」等通用說法，不限定產品。
+個人 `progress.json`、`journal/`、`evidence/`、`workspaces/` 與 `archive/` 不納入版本庫。公開紀錄僅作範例，放在 `docs/examples/`，不得拿來初始化個人完成度。引導文案使用「AI 助教對話」等通用說法，不限定產品。
+
+學員要重做某一課時，使用 `python .\learning\manage.py reset --lesson <課號|all> --revision <n> --yes`，或請學員在頁面按「重新學習本課」。它會把練習副本與進度封存到 `learning/archive/` 並回到第 1 步；只有學員明確要求才執行，且先確認該課專案已在 KiCad 關閉，不要自行加 `--ignore-locks`。不得用手動刪除資料夾或改寫 JSON 代替。
 
 更新進度一律使用 `learning/manage.py`，不得直接覆寫 JSON 或繞過共用鎖、revision 檢查及原子寫入機制。以下 `<n>` 表示剛讀到的 revision，執行時須換成整數：
 

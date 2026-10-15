@@ -58,6 +58,7 @@ cd Kicad-7-Series
 - **共用進度**：網頁與教師命令列共用一份 JSON，以鎖定和 revision 檢查避免互相覆寫。
 - **練習副本**：全部 15 課使用 `learning/workspaces/`，各課獨立操作。
 - **接續教學**：學習紀錄與 [AGENTS.md](AGENTS.md) 保存引導方式，讓後續對話依最新進度接續。
+- **重新學習**：任一課可「重新學習本課」，或一次「全部課程重新開始」；舊副本與進度封存到 `learning/archive/`，不會刪除。
 
 新下載者會從 **第 1 課、全部未開始**起步。若沒有 `learning/progress.json`，程式會依 `progress.template.json` 自動建立空白進度；已有的個人進度會保留。個人進度、日誌、證據與工作副本均不納入 Git，公開範例不會自動匯入進度。
 

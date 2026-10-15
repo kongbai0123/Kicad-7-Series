@@ -30,6 +30,8 @@ The launcher opens the local dashboard, normally at `http://127.0.0.1:8765/`. Us
 
 The dashboard is not an embedded AI chat and does not require a particular assistant product.
 
+**Repeat a lesson:** close the project in KiCad, then use *Restart this lesson* on the lesson page (or *Restart all lessons* on the overview). The old practice copy and its progress are archived under `learning/archive/` rather than deleted, and the lesson returns to step 1 with a fresh copy next time you open it.
+
 On first launch, missing `learning/progress.json` is generated from the blank template: **lesson 1 selected, every lesson not started**. Existing progress is preserved. Personal progress, journals, evidence, runtime files and workspaces are ignored by Git. Back them up separately.
 
 Original course directories retain their upstream paths, including names containing spaces. Completed LED-board examples are separate under [docs/examples](docs/examples/README.md) and never count as your progress. Before upgrading an older checkout, back up any previously tracked personal progress and designs. This release does not rewrite earlier Git history.
