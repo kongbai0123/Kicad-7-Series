@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#18354a">
+  <title>KiCad 邊做邊學</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到課程內容</a>
+  <header class="site-header">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 10h11v9h13M8 30h11V19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="10" r="3" fill="currentColor"/><circle cx="8" cy="30" r="3" fill="currentColor"/><circle cx="32" cy="19" r="3" fill="currentColor"/></svg>
+    </div>
+    <div class="brand-copy">
+      <h1>KiCad 邊做邊學</h1>
+      <p>15 堂課，一次完成一個小步驟。</p>
+    </div>
+    <div class="header-actions">
+      <span class="local-label"><span aria-hidden="true"></span>本機共用進度</span>
+      <a class="button button-quiet button-small" href="/api/export" download>匯出學習進度</a>
+    </div>
+  </header>
+
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <div class="app-shell">
+    <aside class="course-sidebar" aria-label="課程導覽">
+      <div class="sidebar-top">
+        <div class="eyebrow">我的學習路線</div>
+        <p id="course-count" class="course-count">正在讀取課程…</p>
+        <progress id="overall-progress" max="15" value="0" aria-label="已完成課程數"></progress>
+        <p id="resume-summary" class="sidebar-caption">進度會保存在這個專案中。</p>
+      </div>
+      <nav id="lesson-list" class="lesson-list" aria-label="選擇課程"></nav>
+      <div class="sidebar-bottom">
+        <span id="last-saved">正在連線到本機教學服務…</span>
+        <p>切換課程可以先看內容；按下「開始本課」才記錄為開始。</p>
+      </div>
+    </aside>
+
+    <main id="main-content" class="main-content" tabindex="-1">
+      <nav class="view-tabs" aria-label="學習頁面">
+        <button type="button" data-view="lesson" aria-current="page">本次操作</button>
+        <button type="button" data-view="journal">學習紀錄</button>
+        <button type="button" data-view="overview">課程總覽</button>
+      </nav>
+      <div id="view-content" class="view-content" aria-busy="true">
+        <div class="empty-state"><span class="loading-dot" aria-hidden="true"></span><h2>正在讀取學習進度</h2><p>課程、練習檔與學習紀錄都由本機專案提供。</p></div>
+      </div>
+    </main>
+  </div>
+  <footer class="site-footer">依照你的實際操作記錄進度。教材檔案已存在，不代表這堂課已完成。</footer>
+  <div id="clipboard-fallback" class="clipboard-fallback" role="dialog" aria-modal="true" aria-labelledby="clipboard-title" hidden>
+    <div class="clipboard-dialog">
+      <h2 id="clipboard-title">複製接續訊息</h2>
+      <p>請複製下方文字，貼到目前這個 Codex 對話。教學會依共用進度接續。</p>
+      <textarea id="clipboard-text" rows="9" aria-label="接續教學訊息" readonly></textarea>
+      <div class="dialog-actions"><button type="button" class="button button-primary" data-action="close-clipboard">完成</button></div>
+    </div>
+  </div>
+</body>
+</html>

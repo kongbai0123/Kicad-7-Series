@@ -1,0 +1,19 @@
+# KiCad local session, history and backup files
+*.lck
+*.kicad_prl
+**/.history/
+**/*-backups/
+/1_Introduction/report.txt
+
+# Python environments and credentials
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Local operating system files
+.DS_Store
+Thumbs.db
