@@ -216,6 +216,8 @@ class LearningTests(unittest.TestCase):
         with self.assertRaises(state.StateError) as caught:
             self.reset()
         self.assertEqual(caught.exception.status, 423)
+        self.assertIn(".lck", str(caught.exception))
+        self.assertIn("learning/workspaces/02/", str(caught.exception))
         self.assertEqual(state.PROGRESS.read_bytes(), before)
         self.assertTrue((folder / "User Interface.kicad_pro").exists())
         self.assertFalse((state.LEARNING / "archive").exists())

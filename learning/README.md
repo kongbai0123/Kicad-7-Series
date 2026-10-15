@@ -80,6 +80,6 @@ python .\learning\manage.py status
 2. 在課程頁右側「實際操作的檔案」按 **重新學習本課**，再按 **確定重新開始**。要全部重來，到「課程總覽」按 **全部課程重新開始**。
 3. 該課回到第 1 步。再按「開啟練習專案」會從原教材建立全新的副本。
 
-重新開始不會刪除任何東西：舊練習副本與當時的進度、筆記、證據會封存到 `learning/archive/`，原教材與其他課程不受影響。KiCad 仍開著該課專案時會拒絕執行。命令列對應操作為 `python .\learning\manage.py reset --lesson 03 --revision <n> --yes`（`--lesson all` 為全部課程）；只有學員明確要求時才由教師執行。
+重新開始不會刪除任何東西：舊練習副本與當時的進度、筆記、證據會封存到 `learning/archive/`，原教材與其他課程不受影響。KiCad 仍開著該課專案時會拒絕執行；若 KiCad 其實已關閉卻仍被拒絕，是上次異常結束留下的鎖定檔，到該課練習資料夾刪除以 `~` 開頭的 `.lck` 檔即可。命令列對應操作為 `python .\learning\manage.py reset --lesson 03 --revision <n> --yes`（`--lesson all` 為全部課程）；只有學員明確要求時才由教師執行。
 
 完整的問答、卡關與成果示範，見 [公開學習紀錄範例](../docs/examples/lesson-01.md)。自己的進度和練習成果請另行備份。

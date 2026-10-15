@@ -289,7 +289,9 @@ def reset(payload, *, actor="learner", ignore_locks=False):
                 if locks:
                     raise StateError(
                         f"第 {lesson_id} 課的練習專案似乎還在 KiCad 開著（{'、'.join(locks)}）。"
-                        "請先在 KiCad 選「檔案 → 關閉專案」，再重新開始。", 423)
+                        "請先在 KiCad 選「檔案 → 關閉專案」，再重新開始。"
+                        f"若 KiCad 其實已關閉，這是上次異常結束留下的鎖定檔，"
+                        f"可到 {managed}/ 刪除檔名以 ~ 開頭、副檔名為 .lck 的檔案後再試。", 423)
             touched = (folder is not None or current.get("workspace") or current["status"] != "not_started"
                        or current.get("completedSteps") or current.get("notes") or current.get("evidence"))
             if touched:
