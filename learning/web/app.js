@@ -14,6 +14,8 @@
     checks: new Map(),
     checking: false,
     confirmReset: null,
+    expanded: new Set(),
+    collapsed: new Set(),
   };
   const elements = {
     content: document.getElementById('view-content'),
@@ -33,6 +35,14 @@
       copy: '<rect x="6" y="6" width="8" height="9" rx="1.5"/><path d="M10 6V3H2v9h4"/>',
       open: '<path d="M9 2h5v5M14 2 7 9"/><path d="M6 3H2v11h11v-4"/>',
       folder: '<path d="M2 5V3h5l2 2h5v8H2V5Z"/>',
+      page: '<rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M2 5.5h12M5 8.5h6M5 11h4"/>',
+      schematic: '<path d="M1.5 8h3m7 0h3"/><path d="M4.5 6v4l3.5-2-3.5-2Z"/><path d="M8 6v4m0-2h3.5"/>',
+      board: '<rect x="2" y="2" width="12" height="12" rx="2"/><circle cx="5.5" cy="5.5" r="1"/><circle cx="10.5" cy="10.5" r="1"/><path d="M6.5 5.5h2.5v4h.5"/>',
+      cube: '<path d="m8 1.8 5.5 3.1v6.2L8 14.2l-5.5-3.1V4.9Z"/><path d="m2.5 4.9 5.5 3.1 5.5-3.1M8 8v6.2"/>',
+      layers: '<path d="m8 2 6 3-6 3-6-3Z"/><path d="m2 8 6 3 6-3M2 11l6 3 6-3"/>',
+      gear: '<circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2m0 9v2m6.5-6.5h-2m-9 0h-2m11.1-4.6-1.4 1.4m-6.4 6.4-1.4 1.4m9.2 0-1.4-1.4M4.8 4.8 3.4 3.4"/>',
+      chevron: '<path d="m6 4 4 4-4 4"/>',
+      pencil: '<path d="m10.5 2.5 3 3L6 13H3v-3Z"/>',
     };
     return `<svg class="${escapeHtml(className)}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.check}</svg>`;
   };
@@ -178,7 +188,9 @@
       const selected = lesson.id === state.selectedLesson;
       const activeNow = lesson.id === state.data.progress.activeLesson && progress.status === 'in_progress';
       const marker = progress.status === 'completed' ? icon('check', 'nav-state') : `<span class="nav-state ${activeNow ? 'active' : 'pending'}" aria-hidden="true"></span>`;
-      return `<button type="button" class="lesson-nav${selected ? ' is-selected' : ''}${progress.status === 'completed' ? ' is-completed' : ''}" data-lesson="${escapeHtml(lesson.id)}" ${selected ? 'aria-current="true"' : ''} aria-label="第 ${escapeHtml(lesson.id)} 課，${escapeHtml(lesson.title)}，${statusLabel(progress.status)}"><span class="lesson-number">${escapeHtml(lesson.id)}</span><span class="lesson-nav-copy"><span class="lesson-nav-title">${escapeHtml(lesson.title)}</span><span class="lesson-nav-status">${activeNow ? '目前接續' : statusLabel(progress.status)}</span></span>${marker}</button>`;
+      const open = isExpanded(lesson.id);
+      const count = (lesson.steps || []).length;
+      return `<div class="lesson-group${open ? ' is-open' : ''}"><div class="lesson-row"><button type="button" class="lesson-nav${selected ? ' is-selected' : ''}${progress.status === 'completed' ? ' is-completed' : ''}" data-lesson="${escapeHtml(lesson.id)}" ${selected ? 'aria-current="true"' : ''} aria-label="第 ${escapeHtml(lesson.id)} 課，${escapeHtml(lesson.title)}，${statusLabel(progress.status)}"><span class="lesson-number">${escapeHtml(lesson.id)}</span><span class="lesson-nav-copy"><span class="lesson-nav-title">${escapeHtml(lesson.title)}</span><span class="lesson-nav-status">${activeNow ? '目前接續' : statusLabel(progress.status)} · ${stepCount(lesson)}/${count} 步</span></span>${marker}</button><button type="button" class="outline-toggle" data-toggle="${escapeHtml(lesson.id)}" aria-expanded="${open}" aria-controls="outline-${escapeHtml(lesson.id)}" aria-label="${open ? '收合' : '展開'}第 ${escapeHtml(lesson.id)} 課的小節">${icon('chevron')}</button></div>${open ? renderStepOutline(lesson) : ''}</div>`;
     }).join('');
   }
 
@@ -203,7 +215,61 @@
     const step = currentStep(lesson);
     if (!step) return '<section class="panel"><h3>這堂課還沒有操作步驟</h3><p class="panel-subtitle">請在 AI 助教 對話中一起補充本課內容。</p></section>';
     const stepIndex = (lesson.steps || []).findIndex((candidate) => candidate.id === step.id);
-    return `<section class="panel step-panel" aria-labelledby="step-title"><div class="step-top"><div class="step-meta"><span class="eyebrow">這次只做這一步</span><span>第 ${stepIndex + 1} / ${(lesson.steps || []).length} 步 · 已完成 ${stepCount(lesson)} 步</span></div><h3 id="step-title" tabindex="-1">${escapeHtml(step.title)}</h3></div><div class="step-body"><p class="section-label">照著操作</p>${textBlock(step.action)}${renderGuide(step)}${renderFigures(step)}<div class="success-check"><p class="section-label">${icon('check')}做到這樣就可以繼續</p>${textBlock(step.success)}</div>${renderQuiz(step)}${renderCheck(step, canConfirm)}<div class="step-actions"><button type="button" class="button button-primary" data-action="confirm" data-step="${escapeHtml(step.id)}"${canConfirm && quizPassed(step) && !state.checking ? '' : ' disabled'}${canConfirm ? '' : ' data-needs-start="true"'}>${icon('check')}我做完了，記錄進度</button><p class="small-hint">${!canConfirm ? '先按上方「開始本課」或「接續本課」，再記錄完成。' : !quizPassed(step) ? '先回答上方的小問題，再記錄完成。' : (step.checks || []).length ? '按下後會先自動檢查練習檔，通過才記錄。進度會同步給 AI 助教。' : '確認已看到上方的成功結果，再按這個按鈕。進度會同步給 AI 助教。'}</p></div>${step.help ? `<details class="step-help"><summary>找不到按鈕或畫面不同？</summary>${textBlock(step.help)}<p class="small-hint">仍不確定時，複製接續訊息到 AI 助教，並附上目前畫面。</p></details>` : ''}</div></section>`;
+    return `<section class="panel step-panel" aria-labelledby="step-title"><div class="step-top"><div class="step-meta"><span class="eyebrow">這次只做這一步</span><span>第 ${stepIndex + 1} / ${(lesson.steps || []).length} 步 · 已完成 ${stepCount(lesson)} 步</span></div><h3 id="step-title" tabindex="-1">${escapeHtml(step.title)}</h3></div><div class="step-body">${renderTaskBox(lesson, step)}<p class="section-label">照著操作</p>${textBlock(step.action)}${renderGuide(step)}${renderFigures(step)}<div class="success-check"><p class="section-label">${icon('check')}做到這樣就可以繼續</p>${textBlock(step.success)}</div>${renderQuiz(step)}${renderCheck(step, canConfirm)}<div class="step-actions"><button type="button" class="button button-primary" data-action="confirm" data-step="${escapeHtml(step.id)}"${canConfirm && quizPassed(step) && !state.checking ? '' : ' disabled'}${canConfirm ? '' : ' data-needs-start="true"'}>${icon('check')}我做完了，記錄進度</button><p class="small-hint">${!canConfirm ? '先按上方「開始本課」或「接續本課」，再記錄完成。' : !quizPassed(step) ? '先回答上方的小問題，再記錄完成。' : (step.checks || []).length ? '按下後會先自動檢查練習檔，通過才記錄。進度會同步給 AI 助教。' : '確認已看到上方的成功結果，再按這個按鈕。進度會同步給 AI 助教。'}</p></div>${step.help ? `<details class="step-help"><summary>找不到按鈕或畫面不同？</summary>${textBlock(step.help)}<p class="small-hint">仍不確定時，複製接續訊息到 AI 助教，並附上目前畫面。</p></details>` : ''}</div></section>`;
+  }
+
+  function taskIcon(step) {
+    const text = `${step.title} ${(step.guide || []).map((item) => item.where).join(' ')}`;
+    if (/Gerber|鑽孔|ZIP|製造輸出/.test(text)) return 'layers';
+    if (/3D/.test(text)) return 'cube';
+    if (/設定|對話框|庫/.test(text)) return 'gear';
+    if (/PCB|封裝編輯器|電路板|板框|走線|銅/.test(text)) return 'board';
+    if (/原理圖|符號|ERC/.test(text)) return 'schematic';
+    if (/學習頁面|參考圖/.test(text)) return 'page';
+    return 'check';
+  }
+
+  function projectStem(lesson) {
+    const project = (lesson.files || []).find((file) => file.type === 'project');
+    return project ? String(project.path).split('/').pop().replace(/\.kicad_pro$/, '') : '';
+  }
+
+  function taskText(lesson, item) {
+    const stem = projectStem(lesson);
+    const source = String(item.do || '');
+    if (stem && /\.kicad_sch 的原理圖檔/.test(source)) return `雙擊「${stem}.kicad_sch」，開啟原理圖編輯器`;
+    if (stem && /\.kicad_pcb 檔/.test(source)) return `開啟「${stem}.kicad_pcb」（點「PCB 編輯器」）`;
+    let text = source.split(/[。；]/)[0].trim();
+    if (text.length > 34) {
+      const cut = [...text].findIndex((character, index) => character === '，' && index > 6);
+      if (cut > 0) text = [...text].slice(0, cut).join('');
+    }
+    return text;
+  }
+
+  function renderTaskBox(lesson, step) {
+    const guide = step.guide || [];
+    const items = guide.length
+      ? guide.map((item) => ({ text: taskText(lesson, item), mark: item.mark }))
+      : String(asText(step.action)).split(/[；。]\s*/).map((text) => ({ text: text.trim() })).filter((item) => item.text);
+    if (!items.length) return '';
+    return `<div class="task-box"><div class="task-head"><span class="task-icon">${icon(taskIcon(step))}</span><div><p class="task-label">這一步要做</p><p class="task-title">${escapeHtml(step.title)}</p></div></div><ul class="task-list">${items.map((item) => `<li>${item.mark ? `<span class="mark-badge mark-badge-small" aria-label="圖上編號 ${escapeHtml(item.mark)}">${escapeHtml(item.mark)}</span>` : '<span class="task-dot" aria-hidden="true"></span>'}<span>${escapeHtml(item.text)}</span></li>`).join('')}</ul></div>`;
+  }
+
+  function isExpanded(lessonId) {
+    if (state.collapsed.has(lessonId)) return false;
+    return state.expanded.has(lessonId) || lessonId === state.selectedLesson;
+  }
+
+  function renderStepOutline(lesson) {
+    const progress = getProgress(lesson.id);
+    const done = completedSteps(lesson.id);
+    const current = progress.status === 'completed' ? null : currentStep(lesson)?.id;
+    return `<ol class="step-outline" id="outline-${escapeHtml(lesson.id)}">${(lesson.steps || []).map((step, index) => {
+      const status = done.has(step.id) ? 'done' : step.id === current && progress.status === 'in_progress' ? 'current' : step.id === current ? 'next' : 'todo';
+      const label = { done: '已完成', current: '目前在這一步', next: '下一步', todo: '尚未進行' }[status];
+      return `<li class="outline-step is-${status}"${status === 'current' ? ' aria-current="step"' : ''}><span class="outline-marker" aria-hidden="true">${status === 'done' ? icon('check') : index + 1}</span><span class="outline-title">${escapeHtml(step.title)}<span class="sr-only">，${label}</span></span>${status === 'current' ? '<span class="outline-tag">進行中</span>' : ''}</li>`;
+    }).join('')}</ol>`;
   }
 
   function renderGuide(step) {
@@ -481,6 +547,14 @@
   document.addEventListener('click', (event) => {
     const button = event.target.closest('button');
     if (!button || button.disabled) return;
+    if (button.dataset.toggle) {
+      const id = button.dataset.toggle;
+      if (isExpanded(id)) { state.expanded.delete(id); state.collapsed.add(id); }
+      else { state.collapsed.delete(id); state.expanded.add(id); }
+      renderSidebar();
+      elements.lessonList.querySelector(`[data-toggle="${id}"]`)?.focus();
+      return;
+    }
     if (button.dataset.lesson || button.dataset.select) { selectLesson(button.dataset.lesson || button.dataset.select); return; }
     if (button.dataset.view) {
       preserveDraft(); state.confirmReset = null; state.view = button.dataset.view; render(); return;
