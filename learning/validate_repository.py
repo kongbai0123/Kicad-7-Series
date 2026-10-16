@@ -14,14 +14,37 @@ def main():
     root = state.REPO
     catalog = state.catalog()
     assert len(catalog["lessons"]) == 15, "Expected the 15 upstream lessons"
+    all_steps = []
     for lesson in catalog["lessons"]:
         ids = [step["id"] for step in lesson["steps"]]
         assert ids and len(ids) == len(set(ids)), lesson["id"]
         for item in lesson["files"]:
             assert (root / item["path"]).exists(), item["path"]
         for step in lesson["steps"]:
+            all_steps.append(step["id"])
+            guide = step.get("guide", [])
+            assert guide and all(isinstance(row.get(key), str) and row[key].strip()
+                                 for row in guide for key in ("where", "do", "see")), step["id"]
+            numbers = []
             for figure in step.get("figures", []):
                 assert (root / figure["image"]).is_file(), figure["image"]
+                assert figure.get("caption"), (step["id"], "missing caption")
+                for mark in figure.get("marks", []):
+                    assert type(mark["n"]) is int and mark["n"] > 0, step["id"]
+                    assert all(isinstance(mark[key], (int, float)) and 0 <= mark[key] <= 100
+                               for key in ("x", "y")), (step["id"], mark)
+                    assert mark.get("label"), (step["id"], mark)
+                    if mark["n"] not in numbers:
+                        numbers.append(mark["n"])
+            assert numbers == list(range(1, len(numbers) + 1)), (step["id"], numbers)
+            referenced = {row["mark"] for row in guide if "mark" in row}
+            assert referenced == set(numbers), (step["id"], "figure/text references disagree")
+            quiz = step.get("quiz")
+            if quiz:
+                assert quiz.get("question") and quiz.get("explain"), step["id"]
+                assert len(quiz["options"]) >= 2 and type(quiz["answer"]) is int, step["id"]
+                assert 0 <= quiz["answer"] < len(quiz["options"]), step["id"]
+    assert len(all_steps) == 90 and len(set(all_steps)) == 90, "Expected 90 stable checkpoints"
     for name in ("README.md", "README.en.md"):
         source = root / name
         for target in re.findall(r"!?\[[^\]]*\]\(([^)]+)\)", source.read_text(encoding="utf-8")):
@@ -54,7 +77,7 @@ def main():
         private = [name for name in tracked if name == "learning/progress.json" or
                    name.startswith(("learning/journal/", "learning/evidence/", "learning/workspaces/", "learning/archive/"))]
         assert not private, f"Personal data is tracked: {private}"
-    print("Course resources, README links, blank initialization and private-data separation: OK")
+    print("90 guided checkpoints, annotations, quizzes, resource links, blank initialization and private-data separation: OK")
 
 
 if __name__ == "__main__":

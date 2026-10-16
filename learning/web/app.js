@@ -239,12 +239,7 @@
     const source = String(item.do || '');
     if (stem && /\.kicad_sch 的原理圖檔/.test(source)) return `雙擊「${stem}.kicad_sch」，開啟原理圖編輯器`;
     if (stem && /\.kicad_pcb 檔/.test(source)) return `開啟「${stem}.kicad_pcb」（點「PCB 編輯器」）`;
-    let text = source.split(/[。；]/)[0].trim();
-    if (text.length > 34) {
-      const cut = [...text].findIndex((character, index) => character === '，' && index > 6);
-      if (cut > 0) text = [...text].slice(0, cut).join('');
-    }
-    return text;
+    return source.split(/[。；]/)[0].trim();
   }
 
   function renderTaskBox(lesson, step) {
