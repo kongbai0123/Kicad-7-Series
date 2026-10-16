@@ -73,30 +73,382 @@
         {
           "id": "01-01",
           "title": "開啟本課練習副本",
-          "action": "使用本課的「開啟練習專案」功能；在 KiCad 管理員開啟原理圖編輯器。",
-          "success": "已看到本課原理圖編輯器，專案路徑指向練習副本。",
-          "help": "先確認專案名稱和所在資料夾；若開到原教材，回到學習入口重新開啟練習副本。介面不同時，提供包含標題列與工具列的完整截圖。"
+          "action": "按「開啟練習專案」；在 KiCad 專案管理員雙擊 Introduction.kicad_sch，開啟空白的原理圖。",
+          "success": "看到標題為「Introduction — 原理圖編輯器」的視窗，畫布上只有空白圖框。",
+          "help": "先確認專案名稱和所在資料夾；若開到原教材，回到學習入口重新開啟練習副本。介面不同時，提供包含標題列與工具列的完整截圖。",
+          "guide": [
+            {
+              "where": "學習頁面（本頁）",
+              "do": "按頁首的「開啟練習專案」。如果 KiCad 已開著別的專案，先在那個 KiCad 視窗選「檔案 → 關閉專案」再按。",
+              "see": "跳出 KiCad 專案管理員，標題是「Introduction — KiCad 10.0」。",
+              "mark": 1
+            },
+            {
+              "where": "KiCad 專案管理員左側「專案檔案」",
+              "do": "雙擊 Introduction.kicad_sch（或點右側「原理圖編輯器」）；本課的檔案已經準備好，不需要自己新建。",
+              "see": "開出新視窗，標題是「Introduction — 原理圖編輯器」。",
+              "mark": 2
+            },
+            {
+              "where": "原理圖編輯器",
+              "do": "黃色提示列不用處理：它只說明檔案來自舊版 KiCad，儲存時會自動轉新格式。",
+              "see": "黃色提示列。",
+              "mark": 3
+            },
+            {
+              "where": "原理圖編輯器中央",
+              "do": "確認畫布是空白圖框；接下來的電路就畫在這裡。",
+              "see": "空白圖框，右下角是標題欄。",
+              "mark": 4
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-01/kicad10-project-manager.png",
+              "caption": "KiCad 專案管理員：本課檔案已經準備好。",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 20.5,
+                  "y": 2.4,
+                  "label": "標題列：Introduction — KiCad 10.0"
+                },
+                {
+                  "n": 2,
+                  "x": 28.5,
+                  "y": 21.5,
+                  "label": "雙擊 Introduction.kicad_sch"
+                }
+              ]
+            },
+            {
+              "image": "learning/assets/lesson-01/kicad10-blank-schematic.png",
+              "caption": "開啟後的空白原理圖。",
+              "marks": [
+                {
+                  "n": 3,
+                  "x": 52,
+                  "y": 10.4,
+                  "label": "黃色提示：舊版格式，不用處理"
+                },
+                {
+                  "n": 4,
+                  "x": 60,
+                  "y": 40,
+                  "label": "空白畫布：電路畫在這個圖框裡"
+                }
+              ]
+            }
+          ],
+          "checks": [
+            {
+              "type": "project_open",
+              "editor": "sch"
+            }
+          ],
+          "quiz": {
+            "question": "開啟練習專案後，要自己「新建」原理圖檔嗎？",
+            "options": [
+              "不用，Introduction.kicad_sch 已經在專案裡，雙擊開啟即可",
+              "要，先用檔案 → 新建",
+              "要，先複製別課的檔案"
+            ],
+            "answer": 0,
+            "explain": "練習副本已帶著空白的 Introduction.kicad_sch，雙擊就會開啟原理圖編輯器。"
+          }
         },
         {
           "id": "01-02",
           "title": "放置電阻並分清參考與數值",
-          "action": "放置一個電阻；將參考編號設為 R1、數值設為 1k。",
-          "success": "元件旁分別顯示 R1 與 1k。",
-          "help": "參考編號用來辨認元件，1k 是阻值。曾將兩者都填成 1k；若發生相同情況，只修正參考欄位。"
+          "action": "按 A（放置符號），搜尋 resistor 選 Device 的 R，放到畫布；按 E 開屬性，參考維持 R1、數值改成 1k。",
+          "success": "畫布上有一個電阻，旁邊分別顯示 R1 與 1k。",
+          "help": "參考編號用來辨認元件，1k 是阻值。曾將兩者都填成 1k；若發生相同情況，只修正參考欄位。",
+          "guide": [
+            {
+              "where": "原理圖編輯器畫布",
+              "do": "點一下畫布空白處後按 A（放置符號）；也可用選單「放置 → 放置符號」。",
+              "see": "開出「選擇符號」對話框。",
+              "mark": 1
+            },
+            {
+              "where": "選擇符號對話框最上方的篩選欄",
+              "do": "輸入 resistor。",
+              "see": "清單只剩電阻相關的符號。",
+              "mark": 2
+            },
+            {
+              "where": "選擇符號清單",
+              "do": "在 Device 這一組底下點 R（描述是 Resistor），右邊會出現電阻預覽。",
+              "see": "R 這一列反白。",
+              "mark": 3
+            },
+            {
+              "where": "選擇符號對話框右下角",
+              "do": "按「確定 (O)」。",
+              "see": "對話框關閉，電阻跟著滑鼠移動。",
+              "mark": 4
+            },
+            {
+              "where": "原理圖編輯器畫布",
+              "do": "移到圖框中間單擊一下放下，再按 Esc 結束放置。",
+              "see": "畫布出現一個小電阻，旁邊寫 R1 與 R。"
+            },
+            {
+              "where": "原理圖編輯器畫布",
+              "do": "滑鼠移到電阻上按 E（或雙擊電阻），開出「符號屬性」。",
+              "see": "開出「符號屬性」對話框。"
+            },
+            {
+              "where": "符號屬性「欄位」表格",
+              "do": "「參考」那一列已經是 R1（KiCad 自動編號），不用改。",
+              "see": "參考：R1。",
+              "mark": 5
+            },
+            {
+              "where": "符號屬性「欄位」表格",
+              "do": "點「數值」那一列的 R，改成 1k。參考是元件編號，數值才是阻值，兩者不要填反。",
+              "see": "數值：1k。",
+              "mark": 6
+            },
+            {
+              "where": "符號屬性右下角",
+              "do": "按「確定 (O)」。",
+              "see": "畫布上的電阻旁顯示 R1 與 1k。",
+              "mark": 7
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-01/kicad10-place-menu.png",
+              "caption": "放置選單：「放置符號」快捷鍵 A。",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 32.5,
+                  "y": 7.9,
+                  "label": "放置符號（A）"
+                }
+              ]
+            },
+            {
+              "image": "learning/assets/lesson-01/kicad10-choose-resistor.png",
+              "caption": "選擇符號：搜尋 resistor，選 Device 底下的 R。",
+              "marks": [
+                {
+                  "n": 2,
+                  "x": 28,
+                  "y": 7.9,
+                  "label": "篩選欄輸入 resistor"
+                },
+                {
+                  "n": 3,
+                  "x": 31,
+                  "y": 20.2,
+                  "label": "Device → R（Resistor）"
+                },
+                {
+                  "n": 4,
+                  "x": 76,
+                  "y": 95.9,
+                  "label": "確定 (O)"
+                }
+              ]
+            },
+            {
+              "image": "learning/assets/lesson-01/kicad10-resistor-properties.png",
+              "caption": "按 E 開出的符號屬性。",
+              "marks": [
+                {
+                  "n": 5,
+                  "x": 30,
+                  "y": 21.9,
+                  "label": "參考：R1（不用改）"
+                },
+                {
+                  "n": 6,
+                  "x": 30,
+                  "y": 26.3,
+                  "label": "數值：把 R 改成 1k"
+                },
+                {
+                  "n": 7,
+                  "x": 70.5,
+                  "y": 95.2,
+                  "label": "確定 (O)"
+                }
+              ]
+            }
+          ],
+          "quiz": {
+            "question": "電阻的「參考」和「數值」應該各是什麼？",
+            "options": [
+              "參考 R1、數值 1k",
+              "參考 1k、數值 R1",
+              "兩個都填 1k"
+            ],
+            "answer": 0,
+            "explain": "參考用來分辨是哪一顆元件（R1），數值才是阻值（1k）。第 1 課曾把兩格都填成 1k。"
+          }
         },
         {
           "id": "01-03",
           "title": "放置電池與 LED",
-          "action": "放置 Battery_Cell 與 LED；確認參考為 BT1、D1，電池數值為 3V。",
+          "action": "同樣按 A 放置 Battery_Cell（搜尋 battery）與 LED（搜尋 led）；確認參考為 BT1、D1，電池數值改成 3V。",
           "success": "畫面共有 BT1、R1、D1 三個元件。",
-          "help": "一次放一個元件；若仍黏在滑鼠上，按 Esc 退出放置工具，再拍圖確認。"
+          "help": "一次放一個元件；若仍黏在滑鼠上，按 Esc 退出放置工具，再拍圖確認。",
+          "guide": [
+            {
+              "where": "原理圖編輯器畫布",
+              "do": "按 A 搜尋 battery，選 Device 的 Battery_Cell 放到電阻左下方；按「確定 (O)」後單擊放下，再按 Esc。",
+              "see": "畫面多一個電池符號，參考 BT1。"
+            },
+            {
+              "where": "電池符號",
+              "do": "滑鼠移到電池上按 E，把「數值」改成 3V，按「確定 (O)」。",
+              "see": "電池旁顯示 BT1 與 3V。",
+              "mark": 1
+            },
+            {
+              "where": "原理圖編輯器畫布",
+              "do": "按 A 搜尋 led，選 Device 的 LED 放到電阻右下方；單擊放下後按 Esc。",
+              "see": "畫面多一個 LED，參考 D1、數值 LED。",
+              "mark": 2
+            },
+            {
+              "where": "原理圖編輯器",
+              "do": "放好後畫面上應該共有三個元件；若有元件一直黏在滑鼠上，按 Esc。",
+              "see": "BT1、R1、D1 三個元件。",
+              "mark": 3
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-01/kicad10-led-circuit.png",
+              "caption": "參考樣子：圖中已接好線（那是下一步）；這一步只要放好三個元件並改好參考與數值。",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 55,
+                  "y": 55,
+                  "label": "BT1／3V"
+                },
+                {
+                  "n": 2,
+                  "x": 77,
+                  "y": 71,
+                  "label": "D1／LED"
+                },
+                {
+                  "n": 3,
+                  "x": 76,
+                  "y": 17,
+                  "label": "R1／1k"
+                }
+              ]
+            }
+          ],
+          "quiz": {
+            "question": "電池的參考與數值應該是？",
+            "options": [
+              "BT1、3V",
+              "3V、BT1",
+              "B1、Battery"
+            ],
+            "answer": 0,
+            "explain": "BT1 是電池的元件編號，3V 是它的電壓。"
+          }
         },
         {
           "id": "01-04",
           "title": "完成串聯迴路",
-          "action": "從電池正極接到電阻；由電阻接 LED 陽極，再將 LED 陰極接回電池負極；儲存。",
+          "action": "按 W 繪製線：電池正極 → R1，R1 → LED 陽極，LED 陰極 → 電池負極；完成後按 Ctrl+S 儲存。",
           "success": "三個元件形成一個閉合迴路，線端接在腳位端點。",
-          "help": "LED 的方向需核對腳位；導線經過元件附近不代表已接上，放大觀察端點。"
+          "help": "LED 的方向需核對腳位；導線經過元件附近不代表已接上，放大觀察端點。",
+          "guide": [
+            {
+              "where": "原理圖編輯器畫布",
+              "do": "按 W（繪製線）；在腳位末端單擊開始，移到目標腳位末端單擊結束，按 Esc 結束這條線。",
+              "see": "畫出一條綠色導線。",
+              "mark": 1
+            },
+            {
+              "where": "電池上方（＋ 號那一端）",
+              "do": "從電池正極畫線到 R1 左端。",
+              "see": "電池上端接到 R1。",
+              "mark": 2
+            },
+            {
+              "where": "R1 右端到 LED",
+              "do": "從 R1 右端畫線，往下接到 LED 右邊那端（三角形尾端，是陽極 A）。",
+              "see": "R1 接到 LED 陽極。",
+              "mark": 3
+            },
+            {
+              "where": "LED 左端（有直線的一端）",
+              "do": "LED 直線那端是陰極 K，畫線接回電池下端（負極）。",
+              "see": "形成一個封閉迴路。",
+              "mark": 4
+            },
+            {
+              "where": "原理圖編輯器",
+              "do": "放大檢查每個線端都接在腳位末端、沒有留下小圓圈；最後按 Ctrl+S 儲存。",
+              "see": "標題列開頭沒有 * 號。"
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-01/kicad10-place-menu.png",
+              "caption": "繪製線在「放置」選單，快捷鍵 W。",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 32.5,
+                  "y": 14.1,
+                  "label": "繪製線（W）"
+                }
+              ]
+            },
+            {
+              "image": "learning/assets/lesson-01/kicad10-led-circuit.png",
+              "caption": "完成的串聯迴路。",
+              "marks": [
+                {
+                  "n": 2,
+                  "x": 32,
+                  "y": 51.6,
+                  "label": "電池：上端 ＋ 是正極"
+                },
+                {
+                  "n": 3,
+                  "x": 82.5,
+                  "y": 80,
+                  "label": "LED 陽極（接 R1）"
+                },
+                {
+                  "n": 4,
+                  "x": 66.5,
+                  "y": 80,
+                  "label": "LED 陰極（接回電池負極）"
+                }
+              ]
+            }
+          ],
+          "checks": [
+            {
+              "type": "saved_since_start",
+              "editor": "sch"
+            }
+          ],
+          "quiz": {
+            "question": "LED 符號裡，有一條直線的那一端是？",
+            "options": [
+              "陰極 K，接回電池負極",
+              "陽極 A，接 R1",
+              "沒有極性"
+            ],
+            "answer": 0,
+            "explain": "LED 三角形指向的直線端是陰極（K），電流從陽極流向陰極。"
+          }
         },
         {
           "id": "01-05",
