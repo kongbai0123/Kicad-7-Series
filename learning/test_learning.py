@@ -113,12 +113,58 @@ class LearningTests(unittest.TestCase):
         self.assertEqual(final["activeLesson"], "02")
         self.assertEqual(final["lessons"]["01"]["completedSteps"], ["01-01"])
 
-    def test_skipping_a_step_is_rejected_without_writing(self):
+    def test_steps_can_be_confirmed_out_of_order_but_only_once(self):
+        later = self.act("confirm_step", stepId="02-02")
+        self.assertEqual(later["lessons"]["02"]["completedSteps"], ["02-02"])
+        self.assertEqual(later["lessons"]["02"]["currentStep"], "02-01")
         before = state.PROGRESS.read_bytes()
         with self.assertRaises(state.StateError) as caught:
             self.act("confirm_step", stepId="02-02")
         self.assertEqual(caught.exception.status, 409)
         self.assertEqual(state.PROGRESS.read_bytes(), before)
+        final = self.act("confirm_step", stepId="02-01")
+        self.assertEqual(final["lessons"]["02"]["completedSteps"], ["02-01", "02-02"])
+        self.assertEqual(final["lessons"]["02"]["status"], "completed")
+
+    def test_unknown_step_is_rejected_without_writing(self):
+        before = state.PROGRESS.read_bytes()
+        with self.assertRaises(state.StateError):
+            self.act("confirm_step", stepId="01-01")
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+
+    def test_challenge_is_recorded_apart_from_mainline_steps(self):
+        with self.assertRaises(state.StateError):
+            self.act("confirm_challenge")
+        catalog = json.loads((state.LEARNING / "catalog.json").read_text(encoding="utf-8"))
+        catalog["lessons"][1]["challenge"] = {"title": "練習", "goal": "g", "tasks": ["t"], "success": ["s"]}
+        self.write(state.LEARNING / "catalog.json", catalog)
+        result = self.act("confirm_challenge")["lessons"]["02"]
+        self.assertTrue(result["challenge"]["confirmedAt"])
+        self.assertEqual(result["completedSteps"], [])
+        self.assertEqual(result["evidence"][-1]["kind"], "challenge_confirmed")
+        with self.assertRaises(state.StateError) as caught:
+            self.act("confirm_challenge")
+        self.assertEqual(caught.exception.status, 409)
+
+    def test_physical_results_need_a_known_item_and_a_report(self):
+        catalog = json.loads((state.LEARNING / "catalog.json").read_text(encoding="utf-8"))
+        catalog["lessons"][1]["physicalResults"] = [{"id": "fabricated", "label": "送板廠製板"}]
+        self.write(state.LEARNING / "catalog.json", catalog)
+        before = state.PROGRESS.read_bytes()
+        for payload in ({"item": "powered", "note": "亮了"}, {"item": "fabricated", "note": "  "}):
+            with self.assertRaises(state.StateError):
+                self.act("record_physical", **payload)
+        self.assertEqual(state.PROGRESS.read_bytes(), before)
+        lesson = self.act("record_physical", item="fabricated", note="10/30 下單，板廠 A")["lessons"]["02"]
+        self.assertEqual(lesson["physical"]["fabricated"]["note"], "10/30 下單，板廠 A")
+        self.assertEqual(lesson["completedSteps"], [])
+
+    def test_required_check_that_cannot_run_is_recorded_as_unverified(self):
+        check = {"stepId": "02-01", "passed": True, "unverified": ["ERC"], "items": [
+            {"label": "ERC", "detail": "找不到 kicad-cli", "ok": None, "required": True}]}
+        lesson = state.mutate({"expectedRevision": 1, "lessonId": "02", "action": "confirm_step", "stepId": "02-01"},
+                              verification=check)["lessons"]["02"]
+        self.assertEqual([e["kind"] for e in lesson["evidence"]], ["user_confirmed", "tool_unverified"])
 
     def test_stale_revision_cannot_overwrite_newer_progress(self):
         self.act("add_note", note="找不到工具")
@@ -407,6 +453,39 @@ class LearningTests(unittest.TestCase):
             self.assertEqual(lesson["currentStep"], "02-02")
             self.assertEqual([e["kind"] for e in lesson["evidence"]], ["user_confirmed", "tool_verified"])
             self.assertIn("KiCad 已開啟本課練習副本", lesson["evidence"][1]["summary"])
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+            thread.join(timeout=3)
+
+    def test_challenge_checks_block_confirmation_and_new_pages_are_served(self):
+        catalog = json.loads((state.LEARNING / "catalog.json").read_text(encoding="utf-8"))
+        catalog["lessons"][1]["challenge"] = {"title": "練習", "goal": "g", "tasks": ["t"], "success": ["s"],
+                                              "checks": [{"type": "project_open"}]}
+        self.write(state.LEARNING / "catalog.json", catalog)
+        result = state.workspace({"lessonId": "02", "expectedRevision": 1})
+        httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+        url = f"http://127.0.0.1:{httpd.server_port}"
+        def confirm():
+            body = json.dumps({"lessonId": "02", "expectedRevision": state.progress()["revision"],
+                               "action": "confirm_challenge"}).encode()
+            return urlopen(Request(url + "/api/progress", data=body, headers={"Content-Type": "application/json"}))
+        try:
+            with self.assertRaises(HTTPError) as caught:
+                confirm()
+            self.assertEqual(caught.exception.code, 409)
+            self.assertEqual(json.load(caught.exception)["check"]["stepId"], "02-challenge")
+            (self.root / result["path"] / "~User Interface.kicad_sch.lck").write_text("{}", encoding="utf-8")
+            with confirm() as response:
+                lesson = json.load(response)["progress"]["lessons"]["02"]
+            self.assertEqual([e["kind"] for e in lesson["evidence"]], ["challenge_confirmed", "tool_verified"])
+            self.assertTrue(lesson["evidence"][1]["challenge"])
+            with mock.patch.object(server, "WEB", Path(__file__).resolve().parent / "web"):
+                for page in ("/", "/sections.js", "/sections.css", "/legacy.html"):
+                    with urlopen(url + page) as response:
+                        self.assertEqual(response.status, 200)
         finally:
             httpd.shutdown()
             httpd.server_close()
