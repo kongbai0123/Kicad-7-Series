@@ -30,10 +30,12 @@
 
 ## 頁面引導、截圖標示與自動檢查
 
-- `catalog.json` 的步驟可含 `guide`（逐項「在哪個視窗 → 做什麼 → 會看到什麼」，`mark` 對應圖上編號）、`figures`（KiCad 10 實際截圖與以百分比座標標示的編號）、`quiz`（觀察型步驟的小問題，答對才可確認）與 `checks`（自動檢查）。第 2 至 15 課已沿用相同欄位，新增或補充引導時保持此格式。
+- 頁面是「章 → 節 → 小步」：每課的 `sections` 依序列出全部步驟 ID（每步只出現一次），節有 `title` 與一句 `point`。步驟 ID 是進度的鍵，不得改名或重編；要拆細時新增 ID。
+- `catalog.json` 的步驟可含 `guide`（逐項「在哪個視窗 → 做什麼 → 會看到什麼」，`mark` 對應圖上編號）、`figures`（KiCad 10 實際截圖與以百分比座標標示的編號，`role` 為 `kicad10`／`learner`／`upstream`）、`pitfalls`（常見失誤，優先取自實際卡關紀錄）、`quiz`（觀察型選答，不阻擋確認）與 `checks`（自動檢查）。每課另有 `challenge`（選做練習題，可含 `checks`）；第 1、12、15 課有 `physicalResults`。新增或補充引導時保持此格式，並執行 `python learning/validate_repository.py`。
+- 第 00 章速查在 `learning/reference.json`，不計入進度。按鍵須依 KiCad 10 官方手冊核對並記錄來源；`related: true` 表示連結的小步沒有直接使用該鍵。
 - 截圖存於 `learning/assets/lesson-XX/`，必須是 KiCad 10 實際畫面，在教材的暫存副本上擷取，不擷取或改動學員練習副本。標示座標要逐一核對落點，編號不可遮住要指的按鈕或文字。
 - `learning/checks.py` 讀取練習副本做檢查：`project_open`（偵測 KiCad 鎖定檔）、`saved_since_start`、`erc`、`drc`、`footprints`、`new_file`、`new_zip`。ERC、DRC 與 BOM 在暫存複本上以 `kicad-cli` 執行，不寫入學員檔案。`required: false` 的項目只供參考，不阻擋確認。
-- 網頁確認步驟時伺服器先執行該步檢查，必要項目未通過即拒絕記錄；通過時另存 `tool_verified` 證據。對話中以 `manage.py` 代學員確認時不經過檢查，仍只能在學員明確回報後執行。
+- 網頁確認步驟或練習題時伺服器先執行檢查，必要項目未通過即拒絕記錄；通過時另存 `tool_verified` 證據。必要檢查無法執行（例如找不到 `kicad-cli`）時不阻擋，但另存 `tool_unverified`，不得說成工具通過。對話中以 `manage.py` 代學員確認時不經過檢查，仍只能在學員明確回報後執行。
 - KiCad 10 開 KiCad 7 教材必然出現元件庫版本差異的警告，以及 PCB 與原理圖的說明欄位差異、只放在 PCB 的 `REF**` 圖案。檢查結果已標為「可忽略」；教學時說明原因，不要求學員消除。
 
 ## 進度與紀錄
@@ -50,16 +52,19 @@
 python .\learning\manage.py status
 python .\learning\manage.py record --lesson 02 --action confirm_step --revision <n> --step 02-01
 python .\learning\manage.py record --lesson 02 --action add_note --revision <n> --note-file <UTF8筆記檔路徑>
+python .\learning\manage.py record --lesson 02 --action confirm_challenge --revision <n>
+python .\learning\manage.py record --lesson 01 --action record_physical --item fabricated --revision <n> --note-file <UTF8結果檔路徑>
 ```
 
-- 只有學員明確回報該步完成，才執行 `confirm_step`。看到一個檔案存在、建立工作副本或教師認為應已完成，都不能替代學員確認。
+- 只有學員明確回報該步完成，才執行 `confirm_step`。看到一個檔案存在、建立工作副本或教師認為應已完成，都不能替代學員確認。步驟可以不照順序確認；同一步不會重複登記，`currentStep` 是第一個尚未確認的步驟。
+- 練習題用 `confirm_challenge`，不計入 90 個主線小步。製板、焊接、上電等實體結果用 `record_physical`，只在學員回報實際做過並說明結果時記錄；不得由 ZIP、DRC 或 3D 畫面推論。
 - 每次寫入前重新讀取 revision；若回報衝突，重新讀取並核對當前步驟，不以舊資料盲目重試，也不重複登記已完成步驟。
 - 中文筆記使用 UTF-8 檔案配合 `--note-file`。`add_note` 更新目前筆記摘要；先讀既有內容，合併仍有用的上下文後再寫入。歷次事件另由工具保存。
-- 證據明確區分「學員確認」「截圖可見」「檔案檢查」「工具驗證」。工具結果不能冒稱學員已理解，學員口頭確認也不能寫成工具驗證。
+- 證據明確區分「學員確認」「截圖可見」「檔案檢查」「工具驗證」「無法自動驗證」「實體結果」。工具結果不能冒稱學員已理解，學員口頭確認也不能寫成工具驗證。
 - journal 保存具體卡關、原因、有效解法、成果路徑、證據與下次第一步。進度狀態以 JSON 為準；journal 中的完成狀態是該次紀錄的時間快照。
 
 ## 統一入口與新對話
 
-從根目錄 `Start-Learning.cmd` 啟動；它使用 `learning/Start-Learning.ps1`，本機服務預設為 `http://127.0.0.1:8765`。停止服務使用根目錄 `Stop-Learning.cmd`。
+從根目錄 `Start-Learning.cmd` 啟動；它使用 `learning/Start-Learning.ps1`，本機服務預設為 `http://127.0.0.1:8765`；已執行的服務若 Python 程式已更新，啟動器會自動換成新行程。停止服務使用根目錄 `Stop-Learning.cmd`。
 
-網頁負責課程索引、練習入口和共用進度；對話負責引導與看圖排除問題。網頁的「複製接續訊息」讓學員貼入新對話，教師收到後仍須讀取專案檔案和最新進度。不要把網頁描述成已內建即時 AI 對話或已自動連上目前聊天。
+網頁（`/` 整節頁；舊版一次一步頁在 `/legacy.html`）負責課程索引、練習入口和共用進度；對話負責引導與看圖排除問題。網頁的「複製接續訊息」讓學員貼入新對話，教師收到後仍須讀取專案檔案和最新進度。不要把網頁描述成已內建即時 AI 對話或已自動連上目前聊天。

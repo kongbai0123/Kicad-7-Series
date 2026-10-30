@@ -20,14 +20,23 @@ def main():
         assert ids and len(ids) == len(set(ids)), lesson["id"]
         for item in lesson["files"]:
             assert (root / item["path"]).exists(), item["path"]
+        sections = lesson.get("sections", [])
+        assert sections and all(sec.get("title") and sec.get("point") for sec in sections), lesson["id"]
+        assert [sid for sec in sections for sid in sec["steps"]] == ids, (lesson["id"], "sections must list every step once, in order")
+        challenge = lesson.get("challenge")
+        assert challenge and challenge.get("title") and challenge["tasks"] and challenge["success"], lesson["id"]
+        for item in lesson.get("physicalResults", []):
+            assert item.get("id") and item.get("label"), lesson["id"]
         for step in lesson["steps"]:
             all_steps.append(step["id"])
+            assert all(isinstance(text, str) and text.strip() for text in step.get("pitfalls", [])), step["id"]
             guide = step.get("guide", [])
             assert guide and all(isinstance(row.get(key), str) and row[key].strip()
                                  for row in guide for key in ("where", "do", "see")), step["id"]
             numbers = []
             for figure in step.get("figures", []):
                 assert (root / figure["image"]).is_file(), figure["image"]
+                assert figure.get("role") in catalog["figureRoles"], (step["id"], figure["image"])
                 assert figure.get("caption"), (step["id"], "missing caption")
                 for mark in figure.get("marks", []):
                     assert type(mark["n"]) is int and mark["n"] > 0, step["id"]
@@ -45,6 +54,12 @@ def main():
                 assert len(quiz["options"]) >= 2 and type(quiz["answer"]) is int, step["id"]
                 assert 0 <= quiz["answer"] < len(quiz["options"]), step["id"]
     assert len(all_steps) == 90 and len(set(all_steps)) == 90, "Expected 90 stable checkpoints"
+    reference = state.read_json(state.LEARNING / "reference.json")
+    cards = [card for section in reference["sections"] for card in section["cards"]]
+    assert cards and reference["verification"]["sources"], "Chapter 00 needs cards and their sources"
+    for card in cards:
+        assert card["keys"] and card["title"] and card["use"] and card["watch"], card
+        assert set(card["steps"]) <= set(all_steps), (card["title"], "links to an unknown step")
     for name in ("README.md", "README.en.md"):
         source = root / name
         for target in re.findall(r"!?\[[^\]]*\]\(([^)]+)\)", source.read_text(encoding="utf-8")):
@@ -77,7 +92,8 @@ def main():
         private = [name for name in tracked if name == "learning/progress.json" or
                    name.startswith(("learning/journal/", "learning/evidence/", "learning/workspaces/", "learning/archive/"))]
         assert not private, f"Personal data is tracked: {private}"
-    print("90 guided checkpoints, annotations, quizzes, resource links, blank initialization and private-data separation: OK")
+    print(f"90 guided checkpoints in {sum(len(l['sections']) for l in catalog['lessons'])} sections, {len(cards)} reference cards, "
+          "challenges, figure roles, annotations, quizzes, resource links, blank initialization and private-data separation: OK")
 
 
 if __name__ == "__main__":
