@@ -22,21 +22,26 @@
 
 ## 教材與練習成果
 
-- 保留原作者出處與原課程教材。全部 15 課透過統一入口建立 `learning/workspaces/01/` 等獨立副本，在副本練習；不要直接覆寫原課程資料夾。
+- 保留原作者出處與原課程教材。第 1、2 課在各自副本練習，第 3～15 課接續 `learning/workspaces/diya/`，試驗與診斷使用獨立副本；不要直接覆寫原課程資料夾。
 - 每課第一步「開啟練習專案」包含準備副本、開啟對應 KiCad 專案，再由學員確認畫面。建立副本不等於學員完成該步。
 - 第 1 課的公開完成範例位於 `docs/examples/led-board/`，原始入門教材保留於 `1_Introduction/`。本機既有學員成果已遷移至 `learning/workspaces/01/`；避免用教材或新副本覆蓋學員設計。
+- 課程設定 `practice` 的課共用學員自己的專案 `learning/workspaces/<專案>/`（Diya 為 `diya`），後一課接著前一課的成果做；鏈上第一課從 `learning/templates/<專案>-blank/` 的空白專案開始。每課第一次開啟時，會把當時的專案存成 `learning/workspaces/<專案>-snapshots/<課號>/` 快照。目前第 3～15 課已啟用；第 7～12 課接續自己的 PCB 設定、排件、走線與輸出，第 13～15 課加入自製兩腳接頭並收尾，進階修復在獨立實驗副本。
+- 共用專案的「重新學習本課」會把專案還原成該課開始時的快照，並一併重設之後已開始的課；被取代的版本封存到 `learning/archive/`。「改用作者起點」（救援）把專案換成 `practice.startFrom` 指定的起點：作者前一課完成時的資料夾，或 `learning/templates/` 下由作者檔衍生、以 `startNote` 說明的版本（例如 `diya-before-erc` 是作者第 5 課移除電源旗標與無連接旗標，等同第 3 課畫完），只在學員明確要求時執行，命令列為 `manage.py rescue`。不要手動覆寫、搬移或刪除共用專案與快照。
+- 用了救援的課，進度會記錄 `projectFrom: rescue:<資料夾>`；說明成果時要講清楚是從作者起點接續，不能說成從頭獨立完成。
 - 原教材中已有 PCB、Gerber 或程式輸出，只代表參考資料存在，不是學員的完成證據。
 - 製板上傳、下單、採購或實際點燈須有其本身的操作與證據；不要由 ZIP 完成推論已做完這些工作。
 
 ## 頁面引導、截圖標示與自動檢查
 
-- 頁面是「章 → 節 → 小步」：每課的 `sections` 依序列出全部步驟 ID（每步只出現一次），節有 `title` 與一句 `point`。步驟 ID 是進度的鍵，不得改名或重編；要拆細時新增 ID。
+- 頁面是「章 → 節 → 小步」：每課的 `sections` 依序列出全部步驟 ID（每步只出現一次），節有 `title` 與一句 `point`。步驟 ID 是進度的鍵：學員已開始的課不得改名或重編，要拆細時新增 ID；尚未開始的課改編號時，讀取進度會自動指向新的第 1 步。每個步驟有 `kind`：`setup`（準備，不計完成度）、`read`（觀察，計入「已閱讀」）、`build`（在練習專案產出成果，計入「已實作」）；練習題計入「可獨立完成」。
 - `catalog.json` 的步驟可含 `guide`（逐項「在哪個視窗 → 做什麼 → 會看到什麼」，`mark` 對應圖上編號）、`figures`（KiCad 10 實際截圖與以百分比座標標示的編號，`role` 為 `kicad10`／`learner`／`upstream`／`render`；`render` 是 kicad-cli 由公開範例輸出的板面圖，不是編輯器截圖，須在說明中講清楚）、`pitfalls`（常見失誤，優先取自實際卡關紀錄）、`why`（這一步在做什麼，給看不懂目的的學員）、`terms`（名詞解釋）、guide 項目的 `phase`（把較長的步驟分成 A、B、C 階段）、`quiz`（觀察型選答，不阻擋確認）與 `checks`（自動檢查）。每課另有 `challenge`（選做練習題，可含 `checks`）；第 1、12、15 課有 `physicalResults`。新增或補充引導時保持此格式，並執行 `python learning/validate_repository.py`。
 - 第 00 章速查在 `learning/reference.json`，不計入進度。按鍵須依 KiCad 10 官方手冊核對並記錄來源；`related: true` 表示連結的小步沒有直接使用該鍵。
 - 截圖存於 `learning/assets/lesson-XX/`，必須是 KiCad 10 實際畫面，在教材的暫存副本上擷取，不擷取或改動學員練習副本。標示座標要逐一核對落點，編號不可遮住要指的按鈕或文字。
-- `learning/checks.py` 讀取練習副本做檢查：`project_open`（偵測 KiCad 鎖定檔）、`saved_since_start`、`erc`、`drc`、`footprints`、`new_file`、`new_zip`。ERC、DRC 與 BOM 在暫存複本上以 `kicad-cli` 執行，不寫入學員檔案。`required: false` 的項目只供參考，不阻擋確認。
+- `learning/checks.py` 讀取練習副本做檢查：`project_open`（偵測 KiCad 鎖定檔）、`saved_since_start`、`erc`、`drc`、`footprints`、`new_file`、`new_zip`、`netlist_matches`、`footprints_match`。`netlist_matches` 以 kicad-cli 匯出 netlist，依 `learning/<規格>-spec.json` 的「元件種類＋數值＋腳號」比對連線，不管參考編號順序，`parts` 可只檢查已畫的區塊；`footprints_match` 依同一份規格表逐一比對封裝名稱；作者教材的開關封裝在 KiCad 10 改名，規格表用新名稱並註明舊名稱。規格表、`templates/diya-before-erc/` 與第 3 課的目標原理圖圖檔都由 `python learning/build_diya_data.py` 從作者檔重新產生並以 kicad-cli 驗證，元件用途為人工整理。共用專案的「建立副本後已儲存」以該課開始時間為準。ERC、DRC 與 BOM 在暫存複本上以 `kicad-cli` 執行，不寫入學員檔案。`required: false` 的項目只供參考，不阻擋確認。
 - 網頁確認步驟或練習題時伺服器先執行檢查，必要項目未通過即拒絕記錄；通過時另存 `tool_verified` 證據。必要檢查無法執行（例如找不到 `kicad-cli`）時不阻擋，但另存 `tool_unverified`，不得說成工具通過。對話中以 `manage.py` 代學員確認時不經過檢查，仍只能在學員明確回報後執行。
-- KiCad 10 開 KiCad 7 教材必然出現元件庫版本差異的警告，以及 PCB 與原理圖的說明欄位差異、只放在 PCB 的 `REF**` 圖案。檢查結果已標為「可忽略」；教學時說明原因，不要求學員消除。
+- 新增 PCB 檢查 `board_settings`、`netclasses`（可核對實際走線寬度）、`board_outline`、`pcb_matches`、`pcb_connected`、`connector_matches`。`allowExtra` 只允許指定的自製兩腳接頭，不能放過其他未知元件。`new_zip` 會核對七層身份、本次輸出內容及圓孔對齊；支援格式與實驗使用見 [連續課程驗收](docs/CURRICULUM_CONTINUITY.md)。
+- `experiments` 由頁面或 `manage.py experiment` 建立在獨立資料夾，先關閉來源專案。實驗不寫主線進度，不把實驗成果複製成主線完成。第 8、11 課注入的是異網路短接線；第 13、15 課進階診斷固定從作者檔建副本。
+- KiCad 10 開 KiCad 7 教材會出現元件庫版本與說明欄位差異；只有檢查結果明確標為「可忽略」者才可略過。只放在 PCB 的無焊墊、board_only 裝飾可略過額外元件比對；重複參考編號仍須處理，不能以 `REF**` 為由忽略全部一致性錯誤。
 
 ## 進度與紀錄
 
@@ -54,10 +59,11 @@ python .\learning\manage.py record --lesson 02 --action confirm_step --revision 
 python .\learning\manage.py record --lesson 02 --action add_note --revision <n> --note-file <UTF8筆記檔路徑>
 python .\learning\manage.py record --lesson 02 --action confirm_challenge --revision <n>
 python .\learning\manage.py record --lesson 01 --action record_physical --item fabricated --revision <n> --note-file <UTF8結果檔路徑>
+python .\learning\manage.py rescue --lesson <課號> --revision <n> --yes
 ```
 
 - 只有學員明確回報該步完成，才執行 `confirm_step`。看到一個檔案存在、建立工作副本或教師認為應已完成，都不能替代學員確認。步驟可以不照順序確認；同一步不會重複登記，`currentStep` 是第一個尚未確認的步驟。
-- 練習題用 `confirm_challenge`，不計入 90 個主線小步。製板、焊接、上電等實體結果用 `record_physical`，只在學員回報實際做過並說明結果時記錄；不得由 ZIP、DRC 或 3D 畫面推論。
+- 練習題用 `confirm_challenge`，不計入主線小步。製板、焊接、上電等實體結果用 `record_physical`，只在學員回報實際做過並說明結果時記錄；不得由 ZIP、DRC 或 3D 畫面推論。
 - 每次寫入前重新讀取 revision；若回報衝突，重新讀取並核對當前步驟，不以舊資料盲目重試，也不重複登記已完成步驟。
 - 中文筆記使用 UTF-8 檔案配合 `--note-file`。`add_note` 更新目前筆記摘要；先讀既有內容，合併仍有用的上下文後再寫入。歷次事件另由工具保存。
 - 證據明確區分「學員確認」「截圖可見」「檔案檢查」「工具驗證」「無法自動驗證」「實體結果」。工具結果不能冒稱學員已理解，學員口頭確認也不能寫成工具驗證。

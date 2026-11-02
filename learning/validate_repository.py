@@ -8,6 +8,7 @@ import tempfile
 from urllib.parse import unquote
 
 import state
+import checks
 
 
 def main():
@@ -29,9 +30,11 @@ def main():
             assert item.get("id") and item.get("label"), lesson["id"]
         for step in lesson["steps"]:
             all_steps.append(step["id"])
+            assert step.get("kind", "read") in {"setup", "read", "build"}, step["id"]
             assert all(isinstance(text, str) and text.strip() for text in step.get("pitfalls", [])), step["id"]
-            assert all(t.get("term") and t.get("meaning") for t in step.get("terms", [])), step["id"]
-            assert step.get("why", "x").strip() and all(row.get("phase", "x").strip() for row in step.get("guide", [])), step["id"]
+            assert step.get("terms") and all(t.get("term") and t.get("meaning") for t in step["terms"]), step["id"]
+            assert step.get("why", "").strip() and all(row.get("phase", "x").strip() for row in step.get("guide", [])), step["id"]
+            assert all(check["type"] in checks.LABELS for check in step.get("checks", [])), step["id"]
             guide = step.get("guide", [])
             assert guide and all(isinstance(row.get(key), str) and row[key].strip()
                                  for row in guide for key in ("where", "do", "see")), step["id"]
@@ -55,7 +58,50 @@ def main():
                 assert quiz.get("question") and quiz.get("explain"), step["id"]
                 assert len(quiz["options"]) >= 2 and type(quiz["answer"]) is int, step["id"]
                 assert 0 <= quiz["answer"] < len(quiz["options"]), step["id"]
-    assert len(all_steps) == 90 and len(set(all_steps)) == 90, "Expected 90 stable checkpoints"
+    assert len(all_steps) == len(set(all_steps)), "Step IDs are progress keys and must be unique"
+
+    specs = {path.name[:-len("-spec.json")]: state.read_json(path) for path in state.LEARNING.glob("*-spec.json")}
+    for name, spec in specs.items():
+        pins = {part["key"]: part["pins"] for part in spec["parts"]}
+        assert len(pins) == len(spec["parts"]), (name, "duplicate part keys")
+        for part in spec["parts"]:
+            assert part.get("label") and part.get("role") and part.get("lib"), (name, part["key"])
+            assert all(pin in part["pins"] for pair in part.get("swap", []) for pin in pair), (name, part["key"])
+        for net in spec["nets"] + [spec.get("unconnected", [])]:
+            assert all(node["part"] in pins and node["pin"] in pins[node["part"]] for node in net), (name, net)
+        libs = [part["lib"] for part in spec["parts"]]
+        repeated = [part.get("ohms") for part in spec["parts"] if libs.count(part["lib"]) > 1]
+        assert None not in repeated and len(repeated) == len(set(repeated)), (name, "repeated symbol types need distinct values")
+    chains = {}
+    for lesson in catalog["lessons"]:
+        experiments = lesson.get("experiments", [])
+        assert len({e["id"] for e in experiments}) == len(experiments), lesson["id"]
+        for experiment in experiments:
+            assert experiment.get("title") and experiment["kind"] in state._EXPERIMENT_KINDS, lesson["id"]
+            assert experiment.get("stepId", "challenge") in {"challenge", *[s["id"] for s in lesson["steps"]]}, lesson["id"]
+            if experiment.get("source"):
+                assert experiment["source"] == "learning/templates/diya-routing-start", lesson["id"]
+                assert (root / experiment["source"]).is_dir(), lesson["id"]
+        practice = lesson.get("practice")
+        if practice:
+            assert re.fullmatch(r"[a-z0-9-]+", practice["project"]), lesson["id"]
+            start = practice.get("startFrom")
+            assert start is None or (root / start).is_dir(), (lesson["id"], start)
+            chains.setdefault(practice["project"], []).append(lesson)
+        for step in lesson["steps"] + [lesson["challenge"]]:
+            for check in step.get("checks", []):
+                if check["type"] == "netlist_matches":
+                    keys = {part["key"] for part in specs[check["spec"]]["parts"]}
+                    assert set(check.get("parts", keys)) <= keys, (lesson["id"], check)
+    for key, chain in chains.items():
+        assert chain[0]["practice"].get("startFrom") is None, (key, "the first lesson starts from the blank template")
+        assert all(item["practice"].get("startFrom") for item in chain[1:]), (key, "later lessons need an author start")
+        stems = {Path(item["path"]).stem for lesson in chain for item in lesson["files"] if item["type"] == "project"}
+        assert len(stems) == 1, (key, "lessons on one shared project must use one project name", stems)
+        stem = stems.pop()
+        blank = state.LEARNING / "templates" / f"{key}-blank"
+        assert all((blank / f"{stem}.kicad_{kind}").is_file() for kind in ("pro", "sch", "pcb")), (key, blank)
+
     reference = state.read_json(state.LEARNING / "reference.json")
     cards = [card for section in reference["sections"] for card in section["cards"]]
     assert cards and reference["verification"]["sources"], "Chapter 00 needs cards and their sources"
@@ -94,7 +140,7 @@ def main():
         private = [name for name in tracked if name == "learning/progress.json" or
                    name.startswith(("learning/journal/", "learning/evidence/", "learning/workspaces/", "learning/archive/"))]
         assert not private, f"Personal data is tracked: {private}"
-    print(f"90 guided checkpoints in {sum(len(l['sections']) for l in catalog['lessons'])} sections, {len(cards)} reference cards, "
+    print(f"{len(all_steps)} guided steps in {sum(len(l['sections']) for l in catalog['lessons'])} sections, {len(cards)} reference cards, "
           "challenges, figure roles, annotations, quizzes, resource links, blank initialization and private-data separation: OK")
 
 
