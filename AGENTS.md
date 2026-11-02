@@ -31,7 +31,7 @@
 ## 頁面引導、截圖標示與自動檢查
 
 - 頁面是「章 → 節 → 小步」：每課的 `sections` 依序列出全部步驟 ID（每步只出現一次），節有 `title` 與一句 `point`。步驟 ID 是進度的鍵，不得改名或重編；要拆細時新增 ID。
-- `catalog.json` 的步驟可含 `guide`（逐項「在哪個視窗 → 做什麼 → 會看到什麼」，`mark` 對應圖上編號）、`figures`（KiCad 10 實際截圖與以百分比座標標示的編號，`role` 為 `kicad10`／`learner`／`upstream`）、`pitfalls`（常見失誤，優先取自實際卡關紀錄）、`quiz`（觀察型選答，不阻擋確認）與 `checks`（自動檢查）。每課另有 `challenge`（選做練習題，可含 `checks`）；第 1、12、15 課有 `physicalResults`。新增或補充引導時保持此格式，並執行 `python learning/validate_repository.py`。
+- `catalog.json` 的步驟可含 `guide`（逐項「在哪個視窗 → 做什麼 → 會看到什麼」，`mark` 對應圖上編號）、`figures`（KiCad 10 實際截圖與以百分比座標標示的編號，`role` 為 `kicad10`／`learner`／`upstream`／`render`；`render` 是 kicad-cli 由公開範例輸出的板面圖，不是編輯器截圖，須在說明中講清楚）、`pitfalls`（常見失誤，優先取自實際卡關紀錄）、`why`（這一步在做什麼，給看不懂目的的學員）、`terms`（名詞解釋）、guide 項目的 `phase`（把較長的步驟分成 A、B、C 階段）、`quiz`（觀察型選答，不阻擋確認）與 `checks`（自動檢查）。每課另有 `challenge`（選做練習題，可含 `checks`）；第 1、12、15 課有 `physicalResults`。新增或補充引導時保持此格式，並執行 `python learning/validate_repository.py`。
 - 第 00 章速查在 `learning/reference.json`，不計入進度。按鍵須依 KiCad 10 官方手冊核對並記錄來源；`related: true` 表示連結的小步沒有直接使用該鍵。
 - 截圖存於 `learning/assets/lesson-XX/`，必須是 KiCad 10 實際畫面，在教材的暫存副本上擷取，不擷取或改動學員練習副本。標示座標要逐一核對落點，編號不可遮住要指的按鈕或文字。
 - `learning/checks.py` 讀取練習副本做檢查：`project_open`（偵測 KiCad 鎖定檔）、`saved_since_start`、`erc`、`drc`、`footprints`、`new_file`、`new_zip`。ERC、DRC 與 BOM 在暫存複本上以 `kicad-cli` 執行，不寫入學員檔案。`required: false` 的項目只供參考，不阻擋確認。

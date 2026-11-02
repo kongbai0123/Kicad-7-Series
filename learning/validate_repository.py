@@ -30,6 +30,8 @@ def main():
         for step in lesson["steps"]:
             all_steps.append(step["id"])
             assert all(isinstance(text, str) and text.strip() for text in step.get("pitfalls", [])), step["id"]
+            assert all(t.get("term") and t.get("meaning") for t in step.get("terms", [])), step["id"]
+            assert step.get("why", "x").strip() and all(row.get("phase", "x").strip() for row in step.get("guide", [])), step["id"]
             guide = step.get("guide", [])
             assert guide and all(isinstance(row.get(key), str) and row[key].strip()
                                  for row in guide for key in ("where", "do", "see")), step["id"]

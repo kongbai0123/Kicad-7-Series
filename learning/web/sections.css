@@ -124,7 +124,16 @@ code { font-family: Consolas, monospace; font-size: .92em; background: #eef1ec; 
 .ops .do { margin: 0; }
 .ops .see { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 .mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--mark); color: #fff; font-size: 12px; font-weight: 700; }
-.mark.is-empty { background: transparent; border: 2px solid #c9d0cb; width: 12px; height: 12px; margin: 6px 5px; }
+.bullet { width: 7px; height: 7px; margin: 9px 8px; border-radius: 50%; background: #9aa8a2; }
+.ops li.phase { display: block; margin-top: 6px; padding-bottom: 2px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 700; color: var(--navy); }
+.ops li.phase:first-child { margin-top: 0; }
+.why { margin: 0 0 10px; padding: 10px 14px; border-radius: 8px; background: var(--teal-tint); font-size: 14px; }
+.why p { margin: 0; }
+.terms { margin: 0 0 6px; font-size: 14px; }
+.terms summary { cursor: pointer; color: var(--teal-deep); }
+.terms dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 8px 0 0; padding: 10px 14px; border-radius: 8px; background: #f1f4f0; }
+.terms dt { font-weight: 700; }
+.terms dd { margin: 0; }
 .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .checks li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 6px; }
 .checks li::before { content: "✓"; color: var(--teal); font-weight: 700; }
@@ -163,6 +172,8 @@ details.more p { margin: 6px 0 0; }
 .fig-role { display: inline-block; margin-bottom: 6px; padding: 1px 8px; border-radius: 6px; background: #e6ece8; font-size: 12px; color: var(--muted); }
 .fig-role.upstream { background: #ece6f4; color: #5b4a7a; }
 .fig-role.learner { background: var(--amber-tint); color: var(--amber); }
+.fig-role.render { background: #e3eef7; color: #2d5a7b; }
+.shot img[src$=".svg"] { background: #fff; }
 .shot { position: relative; display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden; cursor: zoom-in; }
 .shot img { display: block; width: 100%; height: auto; }
 .shot-mark { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 24px; height: 24px; border: 2px solid #fff; border-radius: 50%; background: var(--mark); color: #fff; font-size: 12px; font-weight: 700; box-shadow: 0 1px 4px rgba(0, 0, 0, .35); pointer-events: none; }
