@@ -11,6 +11,7 @@ import shutil
 import tempfile
 import threading
 import time
+import uuid
 
 REPO = Path(__file__).resolve().parent.parent
 LEARNING = REPO / "learning"
@@ -340,6 +341,10 @@ def _shared_workspace(lesson, shared, payload, before):
     created = not target.exists()
     if not created and rescue:
         raise StateError(f"已經有{shared['label']}；要改用作者起點，請按「改用作者起點」，目前版本會先封存。", 409)
+    progress_before = PROGRESS.read_bytes()
+    events_path = LEARNING / 'events.jsonl'
+    events_before = events_path.read_bytes() if events_path.exists() else None
+    meta_before = _meta_path(target).read_bytes() if _meta_path(target).is_file() else None
     if created:
         if shared["startFrom"] is None:
             source, origin = LEARNING / "templates" / f"{shared['key']}-blank", "blank"
@@ -372,13 +377,31 @@ def _shared_workspace(lesson, shared, payload, before):
         after["activeLesson"] = lesson_id
         _save(before, after, {"action": "prepare_workspace", "lessonId": lesson_id, "path": relative,
                              "from": origin, "actor": "learner"})
-    except Exception:
-        # Undo only what this call created: the start snapshot and a brand-new project copy.
-        if snapshot.exists():
-            _discard_copy(snapshot)
-        if created and target.exists():
-            _discard_copy(target)
-        raise
+    except Exception as exc:
+        # A late event-write failure can occur after progress was replaced. Restore registration
+        # first; if recovery fails, retain every copy that progress may still point at.
+        errors = []
+        for path, raw in ((PROGRESS, progress_before), (events_path, events_before),
+                          (_meta_path(target), meta_before)):
+            try:
+                if raw is None:
+                    path.unlink(missing_ok=True)
+                elif not path.exists() or path.read_bytes() != raw:
+                    _atomic_bytes(path, raw)
+            except OSError as recovery:
+                errors.append(f'{path.relative_to(REPO).as_posix()}：{recovery}')
+                break  # Keep the metadata and copies that the still-current progress may reference.
+        if not errors:
+            try:
+                if snapshot.exists():
+                    _discard_copy(snapshot)
+                if created and target.exists():
+                    _discard_copy(target)
+            except OSError as recovery:
+                errors.append(str(recovery))
+        if errors:
+            raise StateError('建立本課起點失敗，部分回復未完成；所有成果與快照保留，請勿重試。' + '；'.join(errors), 500) from exc
+        raise StateError(f'建立本課起點沒有完成，已還原原本的進度與專案：{exc}', 500) from exc
     return {"progress": after, "path": relative, "created": created}
 
 
@@ -739,4 +762,136 @@ def open_target(lesson_id, target):
         raise StateError("只能開啟課程專案或練習資料夾。")
     if not path.exists():
         raise StateError("找不到練習檔案，請在對話中協助檢查。", 404)
+    return path
+
+
+_EXPERIMENT_KINDS = {'board-thickness': None, 'routing': None, 'drc-clearance': None,
+                     'author-library': '13_Create_Custom_Library', 'smd-repair': '15_PCB_Optimization'}
+_EXPERIMENT_TEMPLATES = {'learning/templates/diya-routing-start'}
+
+
+def experiment(payload):
+    """Create an independent disposable study copy, never replace a mainline design or an older experiment."""
+    lesson = lesson_by_id(payload.get('lessonId'))
+    spec = next((item for item in lesson.get('experiments', []) if item['id'] == payload.get('experimentId')), None)
+    if not spec or not re.fullmatch(r'[a-z0-9-]+', spec['id']) or spec.get('kind') not in _EXPERIMENT_KINDS:
+        raise StateError('找不到這個安全實驗。')
+    with locked():
+        before = progress()
+        if type(payload.get('expectedRevision')) is not int or payload['expectedRevision'] != before['revision']:
+            raise StateError('進度已有更新，請重新整理後再準備實驗。', 409)
+        shared = shared_project(lesson)
+        if not shared:
+            raise StateError('安全實驗只供共用練習專案使用。')
+        author = _EXPERIMENT_KINDS[spec['kind']]
+        if spec.get('source'):
+            if spec['source'] not in _EXPERIMENT_TEMPLATES or spec['kind'] != 'drc-clearance':
+                raise StateError('安全實驗只允許課程指定的受控示範模板。', 403)
+            source, origin = safe_path(spec['source']), f'template:{spec["source"]}'
+        elif author:
+            source, origin = safe_path(author), f'author:{author}'
+        else:
+            if before['lessons'][lesson['id']].get('workspace') != shared['relative']:
+                raise StateError('請先開啟自己的本課練習專案，再準備安全實驗。', 409)
+            source, origin = _reset_path(shared['relative']), 'own'
+        if not source.is_dir():
+            raise StateError('找不到安全實驗的來源專案。', 404)
+        _refuse_if_open(source, '實驗來源專案', source.relative_to(REPO).as_posix())
+        project = next((item for item in lesson.get('files', []) if item['type'] == 'project'), None)
+        if not project:
+            raise StateError('本課沒有專案檔案。')
+        project_name = Path(project['path']).name
+        if not (source / project_name).is_file():
+            raise StateError('來源缺少對應的專案檔案。', 404)
+        relative = f'learning/workspaces/{shared["key"]}-experiments/{lesson["id"]}-{spec["id"]}-{uuid.uuid4().hex[:12]}'
+        target = _reset_path(relative)
+        _stage_copy(source, target)
+        try:
+            # Inherited workspace metadata cannot pretend that an experiment is the mainline.
+            _meta_path(target).unlink(missing_ok=True)
+            record = {'lessonId': lesson['id'], 'experimentId': spec['id'], 'kind': spec['kind'],
+                      'createdAt': now(), 'source': source.relative_to(REPO).as_posix(), 'origin': origin,
+                      'project': project_name, 'note': '獨立實驗副本；不代表主線或作者檔案已修正。'}
+            instructions = (f'安全實驗：{spec.get("title", spec["id"])}\n'
+                            f'來源：{record["source"]}（{origin}）\n'
+                            '這是獨立實驗副本；自己的主線設計與來源檔案不會隨實驗修改。\n\n')
+            if spec['kind'] == 'drc-clearance':
+                record['injected'] = _inject_drc(target / Path(project_name).with_suffix('.kicad_pcb'))
+                injected = record['injected']
+                instructions += (f'本實驗新增一段 F.Cu、0.6 mm 的短接線：{injected["from"]} → {injected["to"]}。\n'
+                                f'線段 UUID：{injected["trackId"]}\n\n'
+                                '1. 在安全副本執行 DRC，選擇 shorting_items 或 clearance 項目定位新增線段。\n'
+                                '2. 刪除這段短接線，重新執行 DRC，確認因這段線出現的短路／間距項目消失。\n'
+                                '3. 主線專案未修改；若其他 DRC 問題仍存在，應逐項處理，不能把本實驗修復等同主線通過。\n')
+            elif spec['kind'] == 'smd-repair':
+                instructions += (
+                    '先重填覆銅並保存 DRC 基準：3 組庭院重疊、4 條熱焊盤不足。\n'
+                    '已在原教材 KiCad 10.0.7 暫存副本驗證的一條修復路徑（絕對座標，mm）：\n'
+                    'MIC：X=220.9772，Y=104.1942，角度=180°。\n'
+                    'LDR：X=220.2594，Y=91.1434，角度=180°。\n'
+                    'LED：X=219.94，Y=95.24，角度=0°。\n'
+                    '移動後把原銅線重新接回相同編號焊墊，不改網路；板框不必擴大。\n'
+                    '僅將 MIC pad 1、LDR pad 2 的 GND 覆銅連接設為實心／Solid；'
+                    '直接接大片銅會較難焊，不能套用成全板預設。\n'
+                    '按 B 重填後重跑 DRC，目標為 0 個板級錯誤、0 未連接。\n'
+                    '這只是七項幾何錯誤修復。驗證副本仍有 23 個警告及 21 筆原理圖一致性原始項目，'
+                    '不能當作可下單製造的板；詳見第 15 課進階練習與公開驗證紀錄。\n')
+            _atomic_bytes(target / 'EXPERIMENT-README.txt', instructions.encode('utf-8'))
+            _atomic_json(target / 'learning-experiment.json', record)
+        except Exception as exc:
+            _discard_copy(target)
+            raise StateError(f'安全實驗準備失敗，自己的專案未變動：{exc}', 500) from exc
+        return {'progress': before, 'path': relative, 'projectPath': f'{relative}/{project_name}',
+                'created': True, 'experiment': spec, 'origin': origin, 'injected': record.get('injected')}
+
+
+def _inject_drc(pcb):
+    """Put a track of net A through a pad of net B in the independent copy only."""
+    import math
+    import pcb_checks
+    data, pads = pcb_checks.board(pcb), []
+    for ref, fp in pcb_checks.footprints(data):
+        at = list(map(float, pcb_checks.child(fp, 'at', ['', '0', '0'])[1:]))
+        angle = math.radians(at[2] if len(at) > 2 else 0)
+        for pad in pcb_checks.children(fp, 'pad'):
+            net = pcb_checks.child(pad, 'net')
+            layers = pcb_checks.child(pad, 'layers')
+            if len(net) < 2 or not net[-1] or not any(layer in layers for layer in ('F.Cu', '*.Cu')):
+                continue
+            xy = list(map(float, pcb_checks.child(pad, 'at', ['', '0', '0'])[1:3]))
+            x = at[0] + xy[0] * math.cos(angle) + xy[1] * math.sin(angle)
+            y = at[1] - xy[0] * math.sin(angle) + xy[1] * math.cos(angle)
+            pads.append((ref, pad[1], x, y, net))
+    pair = next(((a, b) for a in pads for b in pads if a[4][-1] != b[4][-1] and
+                 math.dist(a[2:4], b[2:4]) > .2), None)
+    if pair is None:
+        raise StateError('至少需要兩個不同網路的正面焊墊，才能準備可重現的 DRC 診斷。')
+    a, b = pair
+    modern = int(pcb_checks.child(data, 'version')[1]) >= 20240108
+    net = json.dumps(a[4][-1]) if modern else a[4][1]
+    identifier = str(uuid.uuid4())
+    token = 'uuid' if modern else 'tstamp'
+    track = f'\n  (segment (start {a[2]:.6f} {a[3]:.6f}) (end {b[2]:.6f} {b[3]:.6f}) (width 0.6) (layer "F.Cu") (net {net}) ({token} "{identifier}"))\n'
+    text = pcb.read_text(encoding='utf-8-sig')
+    end = text.rfind(')')
+    _atomic_bytes(pcb, (text[:end] + track + text[end:]).encode('utf-8'))
+    return {'trackId': identifier, 'from': f'{a[0]}.{a[1]}', 'to': f'{b[0]}.{b[1]}',
+            'expectedTypes': ['shorting_items', 'clearance'], 'repair': '刪除這段新增的 F.Cu 0.6 mm 短接線，再重跑 DRC。'}
+
+
+def experiment_target(lesson_id, relative):
+    lesson = lesson_by_id(lesson_id)
+    shared = shared_project(lesson)
+    if not shared or not isinstance(relative, str):
+        raise StateError('實驗路徑不正確。')
+    root = _reset_path(f'learning/workspaces/{shared["key"]}-experiments')
+    folder = _reset_path(relative)
+    if not folder.is_relative_to(root) or folder == root:
+        raise StateError('只能開啟本課的安全實驗副本。', 403)
+    meta = read_json(folder / 'learning-experiment.json')
+    if meta.get('lessonId') != lesson_id or meta.get('experimentId') not in {item['id'] for item in lesson.get('experiments', [])}:
+        raise StateError('這個副本不屬於本課實驗。', 403)
+    path = (folder / meta['project']).resolve()
+    if not path.is_relative_to(folder) or not path.is_file():
+        raise StateError('找不到安全實驗的專案檔案。', 404)
     return path

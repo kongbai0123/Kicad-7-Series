@@ -2,9 +2,9 @@
 
 **fork of [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series)** · [English](README.en.md) · [v0.1.0](https://github.com/kongbai0123/Kicad-7-Series/releases/tag/v0.1.0)
 
-以繁體中文、逐步操作與實際畫面，學習從原理圖到 PCB 製板輸出的完整流程。本 fork 在 [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series) 的教材上，加入 **15 章的整節學習頁、第 00 章快捷鍵速查、每章練習題、截圖圖解與共用進度**；第 3～6 課改為在你自己的 Diya 專案上，從空白原理圖一路畫到指定封裝，並以規格表自動比對成果。
+以繁體中文、逐步操作與實際畫面，學習從原理圖到 PCB 製板輸出的完整流程。本 fork 在 [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series) 的教材上，加入 **15 章的整節學習頁、第 00 章快捷鍵速查、每章練習題、截圖圖解與共用進度**；第 3～15 課接續你自己的 Diya 專案，從空白原理圖、封裝、排件、走線到製板輸出，再加入自製接頭；規格檢查與獨立診斷實驗分開記錄。
 
-原教材使用 **KiCad 7**；本學習系統以 **Windows 與 KiCad 10.0.7 繁體中文介面**實作。需求：**Windows、Python 3.10 以上、KiCad**。變更見 [更新紀錄](CHANGELOG.md)。
+原教材使用 **KiCad 7**；本學習系統以 **Windows 與 KiCad 10.0.7 繁體中文介面**實作。需求：**Windows、Python 3.10 以上、KiCad**。變更見 [更新紀錄](CHANGELOG.md)；連續課程與實測界線見 [修訂驗收](docs/CURRICULUM_CONTINUITY.md)。
 
 ![實際學習頁面：課程清單、逐項操作與圖上編號](docs/images/learning-page.jpg)
 
@@ -20,7 +20,7 @@ cd Kicad-7-Series
 
 也可以在檔案總管連按兩下根目錄的 **`Start-Learning.cmd`**。程式會啟動本機服務並開啟瀏覽器，預設網址為 `http://127.0.0.1:8765/`；若連接埠被占用，會尋找下一個可用位置。服務只監聽本機。
 
-1. 在左側章節欄選一節，按 **開啟練習專案**。第 3～6 課接著用你自己的 Diya 專案（第 3 課從空白開始），其餘各課建立自己的副本。
+1. 在左側章節欄選一節，按 **開啟練習專案**。第 3～15 課接著用你自己的 Diya 專案（第 3 課從空白開始）；第 2 課為選讀暖身，實驗與診斷另建安全副本。
 2. 一節的小步排在同一頁：左邊照著做，右邊對照編號實拍；做完看「做完應該看到」。
 3. 有自動檢查時可按 **先檢查一次**；「想一想」是選答，不會擋住記錄。
 4. 實際完成後按 **我做完了，記錄這一步**。可以不照順序，也能直接跳到任何一節。
@@ -30,7 +30,7 @@ cd Kicad-7-Series
 
 ## 學習路線
 
-第 00 章「常用功能與快捷鍵」是速查卡，依 KiCad 10 官方手冊核對，不計入進度。第 01～15 章對應原教材，每章分 2～4 節；最後一節附本課完成標準與選做練習題。
+第 00 章「常用功能與快捷鍵」是速查卡，依 KiCad 10 官方手冊核對，不計入進度。第 01～15 章對應原教材，每章分 2～5 節；最後一節附本課完成標準與選做練習題。
 
 | 課程 | 主題 | 原教材 |
 | --- | --- | --- |
@@ -60,9 +60,9 @@ cd Kicad-7-Series
 - **觀察與檢查**：以選答小問題協助辨認畫面，並從練習檔案檢查可驗證的結果。
 - **證據分級**：學員確認、工具驗證、無法自動驗證與實體結果（製板、焊接、上電）分開記錄；練習題與主線分開計算。
 - **共用進度**：網頁與教師命令列共用一份 JSON，以鎖定和 revision 檢查避免互相覆寫。
-- **練習副本**：全部 15 課使用 `learning/workspaces/`，各課獨立操作。
+- **練習副本**：第 1、2 課各自練習；第 3～15 課接續 `learning/workspaces/diya/`，實驗隔離。
 - **接續教學**：學習紀錄與 [AGENTS.md](AGENTS.md) 保存引導方式，讓後續對話依最新進度接續。
-- **重新學習**：任一課可「重新學習本課」，或一次「全部課程重新開始」；舊副本與進度封存到 `learning/archive/`，不會刪除。
+- **重新學習**：可重學單課或全部；共用 Diya 還原當課快照，連帶重設後續已開始的課。確認框列出影響，舊版本封存到 `learning/archive/`。
 
 新下載者會從 **第 1 課、全部未開始**起步。若沒有 `learning/progress.json`，程式會依 `progress.template.json` 自動建立空白進度；已有的個人進度會保留。個人進度、日誌、證據與工作副本均不納入 Git，公開範例不會自動匯入進度。
 
@@ -120,7 +120,7 @@ python learning/validate_repository.py
 
 ### 目前自動檢查的限制
 
-[製板 ZIP 完整性驗證 #2](https://github.com/kongbai0123/Kicad-7-Series/issues/2) 仍待改善：目前只檢查 ZIP 可開啟與必要副檔名，不驗證圖層內容。[必要檢查無法執行時的判定 #1](https://github.com/kongbai0123/Kicad-7-Series/issues/1) 與 [放大圖片保留編號 #3](https://github.com/kongbai0123/Kicad-7-Series/issues/3) 已在本機版處理，尚未發布。
+[製板 ZIP 完整性驗證 #2](https://github.com/kongbai0123/Kicad-7-Series/issues/2) 已補上七層身份、本次輸出位元組、孔數／孔徑／孔位與原點合理一致性檢查。適用課程指定的 KiCad 10 Gerber X2、Excellon 公釐圓孔輸出，槽孔與其他格式須另行人工驗證；仍需疊圖及板廠審核。[必要檢查無法執行時的判定 #1](https://github.com/kongbai0123/Kicad-7-Series/issues/1) 與 [放大圖片保留編號 #3](https://github.com/kongbai0123/Kicad-7-Series/issues/3) 已在本機版處理，尚未發布。
 
 ## 參與貢獻
 

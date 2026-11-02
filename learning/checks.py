@@ -19,6 +19,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 
+import pcb_checks
 import state
 
 TIMEOUT = 120
@@ -52,6 +53,12 @@ LABELS = {
     "new_zip": "本次輸出的 ZIP 內容完整",
     "netlist_matches": "原理圖的元件與連線符合規格表",
     "footprints_match": "封裝與規格表一致",
+    "board_settings": "板厚與銅層設定符合本課",
+    "netclasses": "網路類別數值與分配符合本課",
+    "board_outline": "Edge.Cuts 有一個封閉外框",
+    "pcb_matches": "PCB 封裝與網路符合自己的原理圖",
+    "pcb_connected": "PCB 銅連通與原理圖一致",
+    "connector_matches": "自製接頭的腳位與封裝符合規格",
 }
 
 
@@ -158,14 +165,16 @@ def check_drc(cli, pcb):
     if unconnected:
         found += _findings([{"severity": "error", "type": "unconnected_items",
                              "description": "Unconnected items"}] * unconnected)
+    graphical_refs = [ref for ref, fp in pcb_checks.footprints(pcb_checks.board(pcb))
+                      if 'board_only' in pcb_checks.child(fp, 'attr') and not pcb_checks.children(fp, 'pad')]
     parity = []
     for v in report.get("schematic_parity", []):
         kind = v.get("type", "")
         refs = " ".join(i.get("description", "") for i in v.get("items", []))
         if kind == "footprint_symbol_field_mismatch":
             explain, ignorable = "PCB 與原理圖的說明或資料表欄位文字不同；KiCad 10 才開始比對，教材檔案可忽略。", True
-        elif kind in ("extra_footprint", "duplicate_footprints") and "REF**" in refs:
-            explain, ignorable = "PCB 上直接放的圖案或標誌（REF**），沒有對應的原理圖符號；作者有意放置，可忽略。", True
+        elif kind == 'extra_footprint' and ('REF**' in refs or any(ref in refs for ref in graphical_refs)):
+            explain, ignorable = "PCB 上直接放的非電氣圖案或標誌，沒有對應的原理圖符號；可忽略。", True
         else:
             explain, ignorable = "PCB 與原理圖不一致；回原理圖執行「從原理圖更新 PCB」。", False
         parity.append({"severity": "warning" if ignorable else "error", "type": "parity:" + kind,
@@ -285,11 +294,13 @@ def _map_parts(spec, parts, wanted, report_unknown=True):
     return mapping, findings
 
 
-def compare_footprints(spec, parts):
+def compare_footprints(spec, parts, allow_extra=False):
     """Each placed spec part should carry the spec's footprint (KiCad 10 name). Returns (ok, detail, findings)."""
     index = {item["key"]: item for item in spec["parts"]}
     by_ref = {part["ref"]: part for part in parts}
-    mapping, findings = _map_parts(spec, parts, set(index))
+    mapping, findings = _map_parts(spec, parts, set(index), report_unknown=not allow_extra)
+    if allow_extra:
+        findings += _validate_extra_parts(spec, parts)
     if mapping is None:
         return False, "元件還沒編號，暫時無法比對封裝。", findings
     matched = 0
@@ -307,7 +318,7 @@ def compare_footprints(spec, parts):
                 f"{matched} / {len(index)} 個元件的封裝和規格表一致；其餘見下方說明。"), findings
 
 
-def compare_netlist(spec, parts, nets, scope=None):
+def compare_netlist(spec, parts, nets, scope=None, allow_extra=False):
     """Match symbols to the spec by type (and resistance where a type repeats), then compare connections.
 
     Reference numbers are ignored, so R1/R2 may be numbered in any order; the two ends of a resistor and
@@ -316,7 +327,9 @@ def compare_netlist(spec, parts, nets, scope=None):
     """
     index = {item["key"]: item for item in spec["parts"]}
     wanted = set(scope or index)
-    mapping, findings = _map_parts(spec, parts, wanted, report_unknown=scope is None)
+    mapping, findings = _map_parts(spec, parts, wanted, report_unknown=scope is None and not allow_extra)
+    if allow_extra:
+        findings += _validate_extra_parts(spec, parts)
     if mapping is None:
         return False, "元件還沒編號，暫時無法比對連線。", findings
 
@@ -368,9 +381,70 @@ def compare_netlist(spec, parts, nets, scope=None):
     return ok, detail, findings
 
 
-def check_netlist(cli, sch, spec, scope=None):
+def _validate_extra_parts(spec, parts):
+    """The advanced exercise permits one known connector, not arbitrary omitted circuitry."""
+    known = {part['lib'] for part in spec['parts']}
+    extras = [part for part in parts if part['lib'] not in known]
+    findings = [_finding(f'{part["ref"]}（{part["lib"]}）不是本課允許新增的 Diya 自製接頭。', 'extra')
+                for part in extras if part['lib'] != 'Diya_Learning:Diya_Test_1x02']
+    if sum(part['lib'] == 'Diya_Learning:Diya_Test_1x02' for part in extras) > 1:
+        findings.append(_finding('本課只新增一個 Diya_Test_1x02 接頭。', 'extra'))
+    return findings
+
+
+def check_netlist(cli, sch, spec, scope=None, allow_extra=False):
     parts, _pins, nets = read_netlist(cli, sch)
-    return compare_netlist(spec, parts, nets, scope)
+    return compare_netlist(spec, parts, nets, scope, allow_extra)
+
+
+def check_connector(cli, sch, pcb, spec):
+    """Resolve a custom part by its exact library id; validate named power nets, never infer by ref."""
+    parts, _pins, _nets = read_netlist(cli, sch)
+    candidates = [p for p in parts if p['lib'] == spec['lib'] and
+                  (not spec.get('reference') or p['ref'] == spec['reference'])]
+    if len(candidates) != 1:
+        return False, '請放一個已編號的自製接頭；符號庫名稱必須和本課規格一致。', []
+    part, findings = candidates[0], []
+    if spec.get('footprint') and part['footprint'] != spec['footprint']:
+        findings.append(_finding(f'{part["ref"]} 應指定 {spec["footprint"]}。', 'connector'))
+    # The existing comparison ignores net names; the connector intentionally uses the two power names.
+    temp = _copy(sch.parent)
+    try:
+        out = temp / 'connector.xml'
+        _run(cli, ['sch', 'export', 'netlist', '--format', 'kicadxml', '-o', str(out), str(temp / 'w' / sch.name)])
+        root = ET.parse(out).getroot()
+        actual = {node.get('pin'): net.get('name') for net in root.iter('net') for node in net.iter('node')
+                  if node.get('ref') == part['ref']}
+        if spec['lib'] == 'Diya_Learning:Diya_Test_1x02':
+            definitions = [item for item in root.iter('libpart')
+                           if item.get('lib') == 'Diya_Learning' and item.get('part') == 'Diya_Test_1x02']
+            pins = list(definitions[0].iter('pin')) if len(definitions) == 1 else []
+            expected = {'1': ('VCC', 'passive'), '2': ('GND', 'passive')}
+            if len(pins) != 2 or {pin.get('num') for pin in pins} != set(expected):
+                findings.append(_finding('Diya_Test_1x02 必須恰好有第 1、2 腳，不能缺腳、重複腳號或多出其他腳。', 'connector_definition'))
+            for pin in pins:
+                number = pin.get('num')
+                if number in expected and (pin.get('name'), pin.get('type')) != expected[number]:
+                    name, electrical = expected[number]
+                    findings.append(_finding(f'自製符號第 {number} 腳必須命名 {name}、電氣類型為 {electrical}；'
+                                             f'目前是 {pin.get("name", "未命名")}／{pin.get("type", "未設定")}。',
+                                             'connector_definition'))
+    finally:
+        shutil.rmtree(temp, ignore_errors=True)
+    for pin, name in spec['pins'].items():
+        if actual.get(pin) != name:
+            findings.append(_finding(f'{part["ref"]} 第 {pin} 腳應接 {name}，目前是 {actual.get(pin, "未連接")}。', 'connector'))
+    if spec.get('pcb'):
+        fps = [fp for ref, fp in pcb_checks.footprints(pcb_checks.board(pcb)) if ref == part['ref']]
+        if len(fps) != 1 or fps[0][1] != spec.get('footprint', part['footprint']):
+            findings.append(_finding('自製接頭尚未正確更新到 PCB。', 'connector'))
+        else:
+            actual_pads = {p[1]: pcb_checks.child(p, 'net')[-1] for p in pcb_checks.children(fps[0], 'pad')
+                           if len(pcb_checks.child(p, 'net')) > 1}
+            for pin, name in spec['pins'].items():
+                if actual_pads.get(pin) != name:
+                    findings.append(_finding(f'PCB 接頭 pad {pin} 應屬於 {name}。', 'connector'))
+    return not findings, f'{part["ref"]} 腳位與指定的符號／封裝已核對。' if not findings else '自製接頭尚有規格差異。', findings
 
 
 def run_step(lesson, step, progress):
@@ -378,6 +452,8 @@ def run_step(lesson, step, progress):
     if not checks:
         return None
     folder, created = _workspace(lesson["id"], progress)
+    if progress['lessons'][lesson['id']].get('workspace') != state.workspace_path(lesson):
+        folder, created = None, None
     items = []
     cli = None
     for spec in checks:
@@ -406,7 +482,7 @@ def run_step(lesson, step, progress):
                     items.append(_item(kind, None, "找不到 kicad-cli，無法自動比對；請對照規格表自行確認。", required))
                     continue
                 ok, detail, findings = check_netlist(cli, _design(lesson, folder, "sch"),
-                                                     load_spec(spec["spec"]), spec.get("parts"))
+                                                     load_spec(spec["spec"]), spec.get("parts"), spec.get('allowExtra', False))
                 items.append(_item(kind, ok, detail, required, findings))
             elif kind == "footprints_match":
                 cli = cli or find_cli()
@@ -414,7 +490,43 @@ def run_step(lesson, step, progress):
                     items.append(_item(kind, None, "找不到 kicad-cli，無法自動比對封裝；請對照規格表自行確認。", required))
                     continue
                 parts, _pins, _nets = read_netlist(cli, _design(lesson, folder, "sch"))
-                ok, detail, findings = compare_footprints(load_spec(spec["spec"]), parts)
+                ok, detail, findings = compare_footprints(load_spec(spec["spec"]), parts, spec.get('allowExtra', False))
+                items.append(_item(kind, ok, detail, required, findings))
+            elif kind in ('board_settings', 'netclasses', 'board_outline'):
+                pcb = _design(lesson, folder, 'pcb')
+                design = pcb.with_suffix('.kicad_pro') if kind == 'netclasses' else pcb
+                if not design.is_file():
+                    items.append(_item(kind, False, f'尚未建立並儲存 {design.name}。', required))
+                    continue
+                runner = {'board_settings': pcb_checks.settings, 'netclasses': pcb_checks.netclasses,
+                          'board_outline': pcb_checks.outline}[kind]
+                ok, detail, findings = runner(design, spec)
+                items.append(_item(kind, ok, detail, required, findings))
+            elif kind in ('pcb_matches', 'pcb_connected', 'connector_matches'):
+                cli = cli or find_cli()
+                if not cli:
+                    items.append(_item(kind, None, '找不到 kicad-cli，無法核對自己的原理圖與 PCB。', required))
+                    continue
+                sch, pcb = _design(lesson, folder, 'sch'), _design(lesson, folder, 'pcb')
+                if not sch.is_file() or (kind != 'connector_matches' or spec.get('pcb')) and not pcb.is_file():
+                    items.append(_item(kind, False, '請先建立並儲存自己的原理圖與 PCB。', required))
+                    continue
+                if kind == 'connector_matches':
+                    ok, detail, findings = check_connector(cli, sch, pcb, spec)
+                else:
+                    parts, _pins, nets = read_netlist(cli, sch)
+                    ok, detail, findings = pcb_checks.matches(pcb, parts, nets)
+                    if spec.get('spec'):
+                        correct, _detail, extra = compare_netlist(load_spec(spec['spec']), parts, nets,
+                                                                 allow_extra=spec.get('allowExtra', False))
+                        ok, findings = ok and correct, findings + extra
+                    if kind == 'pcb_connected':
+                        _all_ok, _drc_detail, drc_findings = check_drc(cli, pcb)
+                        blocking = [f for f in drc_findings if f['type'] in ('unconnected_items', 'shorting_items', 'tracks_crossing') or
+                                    f['type'].startswith('parity:') and not f['ignorable']]
+                        findings += blocking
+                        ok = ok and not blocking
+                        detail = '已核對 PCB 與自己的原理圖一致，且沒有未連接銅或跨網短路；其餘製造規則另由 DRC 檢查。' if ok else 'PCB 網路、銅連通、短路或原理圖一致性尚未通過。'
                 items.append(_item(kind, ok, detail, required, findings))
             elif kind in ("erc", "drc", "footprints"):
                 cli = cli or find_cli()
@@ -438,14 +550,15 @@ def run_step(lesson, step, progress):
                 if not zips:
                     items.append(_item(kind, False, "練習副本中還沒有本次新建的 ZIP。", required))
                     continue
-                with zipfile.ZipFile(zips[-1]) as archive:
-                    names = archive.namelist()
-                    broken = archive.testzip()
-                lacking = [ext for ext in spec.get("must", []) if not any(n.lower().endswith(ext) for n in names)]
-                ok = not lacking and broken is None
-                detail = f"{zips[-1].name}：{len(names)} 個檔案。" + (f"缺少 {'、'.join(lacking)}。" if lacking else "") + \
-                    (f"壓縮內容損壞：{broken}。" if broken else "")
-                items.append(_item(kind, ok, detail, required))
+                pcb = _design(lesson, folder, 'pcb')
+                if not pcb or not pcb.is_file():
+                    items.append(_item(kind, False, '找不到自己的 PCB，無法核對製板 ZIP。', required))
+                    continue
+                try:
+                    ok, detail, findings = pcb_checks.fabrication_zip(zips[-1], folder, pcb, limit)
+                except (ValueError, zipfile.BadZipFile, UnicodeError) as exc:
+                    ok, detail, findings = False, f'ZIP 製板內容無效：{exc}', []
+                items.append(_item(kind, ok, detail, required, findings))
             else:
                 items.append(_item(kind, None, "未知的檢查類型。", False))
         except (OSError, ValueError, KeyError, subprocess.SubprocessError, zipfile.BadZipFile) as exc:

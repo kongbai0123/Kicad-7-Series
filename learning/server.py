@@ -24,7 +24,7 @@ CODE = Path(__file__).resolve().parent
 
 def code_fingerprint():
     """Python modules are loaded once; the launcher restarts a server whose code changed on disk."""
-    return [(name, (CODE / name).stat().st_mtime_ns) for name in ("server.py", "state.py", "checks.py", "reader.py")]
+    return [(name, (CODE / name).stat().st_mtime_ns) for name in ("server.py", "state.py", "checks.py", "pcb_checks.py", "reader.py")]
 
 
 STARTED_WITH = code_fingerprint()
@@ -180,12 +180,24 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json({"check": run_check(payload)})
             if route == "/api/workspace":
                 return self.send_json(state.workspace(payload))
+            if route == '/api/experiment':
+                result = state.experiment(payload)
+                if payload.get('open') is True:
+                    try:
+                        if os.name != 'nt':
+                            raise OSError('此啟動方式供 Windows 使用，請從實驗資料夾開啟專案。')
+                        os.startfile(str(state.experiment_target(payload['lessonId'], result['path'])))
+                        result['opened'] = True
+                    except OSError as exc:
+                        result.update(opened=False, openError=str(exc))
+                return self.send_json(result)
             if route == "/api/reset":
                 return self.send_json(state.reset(payload))
             if route == "/api/rescue":
                 return self.send_json(state.rescue(payload))
             if route == "/api/open":
-                path = state.open_target(payload.get("lessonId"), payload.get("target"))
+                path = state.experiment_target(payload.get('lessonId'), payload.get('experimentPath')) \
+                    if payload.get('target') == 'experiment' else state.open_target(payload.get("lessonId"), payload.get("target"))
                 if os.name != "nt":
                     raise state.StateError("此啟動方式供 Windows 使用，請由資料夾開啟專案。")
                 os.startfile(str(path))

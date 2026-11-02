@@ -8,6 +8,7 @@ import tempfile
 from urllib.parse import unquote
 
 import state
+import checks
 
 
 def main():
@@ -31,8 +32,9 @@ def main():
             all_steps.append(step["id"])
             assert step.get("kind", "read") in {"setup", "read", "build"}, step["id"]
             assert all(isinstance(text, str) and text.strip() for text in step.get("pitfalls", [])), step["id"]
-            assert all(t.get("term") and t.get("meaning") for t in step.get("terms", [])), step["id"]
-            assert step.get("why", "x").strip() and all(row.get("phase", "x").strip() for row in step.get("guide", [])), step["id"]
+            assert step.get("terms") and all(t.get("term") and t.get("meaning") for t in step["terms"]), step["id"]
+            assert step.get("why", "").strip() and all(row.get("phase", "x").strip() for row in step.get("guide", [])), step["id"]
+            assert all(check["type"] in checks.LABELS for check in step.get("checks", [])), step["id"]
             guide = step.get("guide", [])
             assert guide and all(isinstance(row.get(key), str) and row[key].strip()
                                  for row in guide for key in ("where", "do", "see")), step["id"]
@@ -72,6 +74,14 @@ def main():
         assert None not in repeated and len(repeated) == len(set(repeated)), (name, "repeated symbol types need distinct values")
     chains = {}
     for lesson in catalog["lessons"]:
+        experiments = lesson.get("experiments", [])
+        assert len({e["id"] for e in experiments}) == len(experiments), lesson["id"]
+        for experiment in experiments:
+            assert experiment.get("title") and experiment["kind"] in state._EXPERIMENT_KINDS, lesson["id"]
+            assert experiment.get("stepId", "challenge") in {"challenge", *[s["id"] for s in lesson["steps"]]}, lesson["id"]
+            if experiment.get("source"):
+                assert experiment["source"] == "learning/templates/diya-routing-start", lesson["id"]
+                assert (root / experiment["source"]).is_dir(), lesson["id"]
         practice = lesson.get("practice")
         if practice:
             assert re.fullmatch(r"[a-z0-9-]+", practice["project"]), lesson["id"]
