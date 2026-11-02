@@ -246,4 +246,7 @@ def run_step(lesson, step, progress):
         except (OSError, ValueError, KeyError, subprocess.SubprocessError, zipfile.BadZipFile) as exc:
             items.append(_item(kind, None, f"自動檢查沒有完成：{exc}", required))
     blocked = any(i["required"] and i["ok"] is False for i in items)
-    return {"stepId": step["id"], "passed": not blocked, "ranAt": state.now(), "items": items}
+    # A required check that could not run does not block the learner, but it is never reported as verified.
+    unverified = [i["label"] for i in items if i["required"] and i["ok"] is None]
+    return {"stepId": step["id"], "passed": not blocked, "unverified": unverified,
+            "ranAt": state.now(), "items": items}

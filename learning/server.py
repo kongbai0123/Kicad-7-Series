@@ -19,14 +19,34 @@ from reader import render_document
 
 WEB = state.LEARNING / "web"
 MAX_BODY = 32768
+CODE = Path(__file__).resolve().parent
+
+
+def code_fingerprint():
+    """Python modules are loaded once; the launcher restarts a server whose code changed on disk."""
+    return [(name, (CODE / name).stat().st_mtime_ns) for name in ("server.py", "state.py", "checks.py", "reader.py")]
+
+
+STARTED_WITH = code_fingerprint()
 
 
 def run_check(payload):
     lesson = state.lesson_by_id(payload.get("lessonId"))
-    step = next((item for item in lesson["steps"] if item["id"] == payload.get("stepId")), None)
+    if payload.get("challenge") is True or payload.get("action") == "confirm_challenge":
+        step = lesson.get("challenge")
+        if not step:
+            raise state.StateError("本課沒有練習題。")
+        step = {**step, "id": f"{lesson['id']}-challenge"}
+    else:
+        step = next((item for item in lesson["steps"] if item["id"] == payload.get("stepId")), None)
     if step is None:
         raise state.StateError("找不到這個操作步驟。")
     return checks.run_step(lesson, step, state.progress())
+
+
+def reference():
+    path = state.LEARNING / "reference.json"
+    return state.read_json(path) if path.is_file() else None
 
 
 def learning_resources():
@@ -88,15 +108,16 @@ class Handler(BaseHTTPRequestHandler):
             self._check_host()
             route = unquote(urlparse(self.path).path)
             if route == "/api/health":
-                return self.send_json({"application": "kicad-guided-learning", "project": str(state.REPO), "ready": True})
+                return self.send_json({"application": "kicad-guided-learning", "project": str(state.REPO), "ready": True,
+                                       "codeCurrent": code_fingerprint() == STARTED_WITH, "pid": os.getpid()})
             if route == "/api/bootstrap":
                 return self.send_json({
                     "projectRoot": str(state.REPO),
                     "catalog": state.catalog(), "progress": state.progress(),
-                    **learning_resources()})
+                    "reference": reference(), **learning_resources()})
             if route == "/api/export":
                 return self.send_json(state.progress(), extra={"Content-Disposition": 'attachment; filename="KiCad-learning-progress.json"'})
-            if route in {"/", "/index.html", "/app.css", "/app.js"}:
+            if route in {"/", "/index.html", "/sections.css", "/sections.js", "/legacy.html", "/app.css", "/app.js"}:
                 name = "index.html" if route in {"/", "/index.html"} else route.lstrip("/")
                 return self.file(WEB / name)
             if route.startswith("/files/"):
@@ -136,7 +157,7 @@ class Handler(BaseHTTPRequestHandler):
             route = urlparse(self.path).path
             if route == "/api/progress":
                 verification = None
-                if payload.get("action") == "confirm_step":
+                if payload.get("action") in {"confirm_step", "confirm_challenge"}:
                     verification = run_check(payload)
                     if verification and not verification["passed"]:
                         return self.send_json({"error": "自動檢查還沒通過，請依下方說明修正後再確認。",

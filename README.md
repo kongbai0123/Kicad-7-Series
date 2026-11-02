@@ -2,7 +2,7 @@
 
 **fork of [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series)** · [English](README.en.md) · [v0.1.0](https://github.com/kongbai0123/Kicad-7-Series/releases/tag/v0.1.0)
 
-以繁體中文、逐步操作與實際畫面，學習從原理圖到 PCB 製板輸出的完整流程。本 fork 在 [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series) 的教材上，加入 **15 課統一入口、90 個操作檢查點、截圖圖解、練習副本與共用進度**。
+以繁體中文、逐步操作與實際畫面，學習從原理圖到 PCB 製板輸出的完整流程。本 fork 在 [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series) 的教材上，加入 **15 章 33 節的整節學習頁、90 個操作小步、第 00 章快捷鍵速查、每章練習題、截圖圖解、練習副本與共用進度**。
 
 原教材使用 **KiCad 7**；本學習系統以 **Windows 與 KiCad 10.0.7 繁體中文介面**實作。需求：**Windows、Python 3.10 以上、KiCad**。變更見 [更新紀錄](CHANGELOG.md)。
 
@@ -20,15 +20,17 @@ cd Kicad-7-Series
 
 也可以在檔案總管連按兩下根目錄的 **`Start-Learning.cmd`**。程式會啟動本機服務並開啟瀏覽器，預設網址為 `http://127.0.0.1:8765/`；若連接埠被占用，會尋找下一個可用位置。服務只監聽本機。
 
-1. 選擇課程，按 **開啟練習專案**。全部 15 課都會建立自己的副本。
-2. 每次只做目前這一步，對照操作說明、編號圖與成功判準。
-3. 有小問題時先作答；有自動檢查時可按 **先檢查一次**。
-4. 實際完成後按 **我做完了，記錄進度**，再進到下一步。
+1. 在左側章節欄選一節，按 **開啟練習專案**。全部 15 課都會建立自己的副本。
+2. 一節的小步排在同一頁：左邊照著做，右邊對照編號實拍；做完看「做完應該看到」。
+3. 有自動檢查時可按 **先檢查一次**；「想一想」是選答，不會擋住記錄。
+4. 實際完成後按 **我做完了，記錄這一步**。可以不照順序，也能直接跳到任何一節。
 5. 卡住時，按 **複製接續訊息**貼入可存取本專案的 AI 助教對話，附上當前畫面，接著逐步問答。
 
 問答引導在對話中進行，學習頁負責呈現課程及保存進度。本機頁面不需雲端帳號或 API 金鑰；AI 助教需能讀取本機專案並遵循通用的 `AGENTS.md`，不限定特定產品。完整操作方法見 [學習入口說明](learning/README.md)。停止本機服務可執行 **`Stop-Learning.cmd`**。
 
-## 15 課學習路線
+## 學習路線
+
+第 00 章「常用功能與快捷鍵」是速查卡，依 KiCad 10 官方手冊核對，不計入進度。第 01～15 章對應原教材，每章分 2～4 節；最後一節附本課完成標準與選做練習題。
 
 | 課程 | 主題 | 原教材 |
 | --- | --- | --- |
@@ -52,9 +54,11 @@ cd Kicad-7-Series
 
 ## 引導與進度
 
-- **一次一小步**：說明在哪個視窗、做什麼，以及成功後會看到什麼。
-- **實際畫面圖解**：課程步驟附 KiCad 10 截圖、位置編號與對應文字。
-- **觀察與檢查**：以小問題協助辨認畫面，並從練習檔案檢查可驗證的結果。
+- **一節一頁**：一節的小步依序排在同一頁，每步是「一句重點 → 怎麼做 → 做完應該看到 → 常見失誤 → 找不到位置？」。
+- **不限制跳轉**：任何一節都能直接打開，小步可不照順序記錄；側欄可收合成只剩編號。
+- **實際畫面圖解**：課程步驟附 KiCad 10 截圖、位置編號與對應文字；放大後仍保留編號，並標明是操作實拍、學員截圖或原教材參考圖。
+- **觀察與檢查**：以選答小問題協助辨認畫面，並從練習檔案檢查可驗證的結果。
+- **證據分級**：學員確認、工具驗證、無法自動驗證與實體結果（製板、焊接、上電）分開記錄；練習題與主線分開計算。
 - **共用進度**：網頁與教師命令列共用一份 JSON，以鎖定和 revision 檢查避免互相覆寫。
 - **練習副本**：全部 15 課使用 `learning/workspaces/`，各課獨立操作。
 - **接續教學**：學習紀錄與 [AGENTS.md](AGENTS.md) 保存引導方式，讓後續對話依最新進度接續。
@@ -79,10 +83,11 @@ Kicad-7-Series/
 ├─ Stop-Learning.cmd         停止本機服務
 ├─ AGENTS.md                 持久教學規範
 ├─ learning/
-│  ├─ catalog.json           15 課與操作步驟
+│  ├─ catalog.json           15 課、分節、操作步驟與練習題
+│  ├─ reference.json         第 00 章快捷鍵速查
 │  ├─ progress.template.json 空白進度範本
 │  ├─ progress.json          個人進度，自動建立且不納入 Git
-│  ├─ web/                   學習頁面
+│  ├─ web/                   學習頁面（index 整節頁、legacy 舊版逐步頁）
 │  ├─ checks.py              自動檢查
 │  ├─ manage.py              教師進度工具
 │  ├─ assets/                截圖與圖解
@@ -106,6 +111,7 @@ python -m unittest discover -s learning -p "test_*.py" -v
 若有安裝 Node.js，也可以檢查前端 JavaScript 語法：
 
 ```powershell
+node --check learning/web/sections.js
 node --check learning/web/app.js
 python learning/validate_repository.py
 ```
@@ -114,7 +120,7 @@ python learning/validate_repository.py
 
 ### 目前自動檢查的限制
 
-仍待改善的行為集中追蹤於 [必要檢查無法執行時的判定 #1](https://github.com/kongbai0123/Kicad-7-Series/issues/1)、[製板 ZIP 完整性驗證 #2](https://github.com/kongbai0123/Kicad-7-Series/issues/2)、[放大圖片保留編號 #3](https://github.com/kongbai0123/Kicad-7-Series/issues/3)。
+[製板 ZIP 完整性驗證 #2](https://github.com/kongbai0123/Kicad-7-Series/issues/2) 仍待改善：目前只檢查 ZIP 可開啟與必要副檔名，不驗證圖層內容。[必要檢查無法執行時的判定 #1](https://github.com/kongbai0123/Kicad-7-Series/issues/1) 與 [放大圖片保留編號 #3](https://github.com/kongbai0123/Kicad-7-Series/issues/3) 已在本機版處理，尚未發布。
 
 ## 參與貢獻
 

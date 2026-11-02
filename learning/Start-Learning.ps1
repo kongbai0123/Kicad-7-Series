@@ -9,7 +9,11 @@ $selectedPort = $null
 foreach ($candidatePort in 8765..8774) {
     try {
         $health = Invoke-RestMethod -Uri "http://127.0.0.1:$candidatePort/api/health" -TimeoutSec 1
-        if ($health.application -eq 'kicad-guided-learning' -and $health.project -eq $projectRoot) {
+        if ($health.application -eq 'kicad-guided-learning' -and $health.project -eq $projectRoot -and $health.codeCurrent -ne $true -and $health.pid) {
+            # The running service predates the current code; replace it so new features are served.
+            Stop-Process -Id ([int]$health.pid) -ErrorAction SilentlyContinue
+            Start-Sleep -Milliseconds 500
+        } elseif ($health.application -eq 'kicad-guided-learning' -and $health.project -eq $projectRoot) {
             $entryUrl = "http://127.0.0.1:$candidatePort/"
             if (-not $NoBrowser) { Start-Process $entryUrl }
             Write-Output $entryUrl

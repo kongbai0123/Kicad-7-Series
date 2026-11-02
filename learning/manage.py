@@ -17,9 +17,10 @@ reset.add_argument("--yes", action="store_true", help="confirm; the learner must
 reset.add_argument("--ignore-locks", action="store_true", help="continue even if KiCad lock files remain")
 record = sub.add_parser("record")
 record.add_argument("--lesson", required=True)
-record.add_argument("--action", choices=["activate_lesson", "confirm_step", "add_note"], required=True)
+record.add_argument("--action", choices=["activate_lesson", "confirm_step", "add_note", "confirm_challenge", "record_physical"], required=True)
 record.add_argument("--revision", type=int, required=True)
 record.add_argument("--step")
+record.add_argument("--item", help="physical result id, such as fabricated")
 record.add_argument("--note")
 record.add_argument("--note-file", type=Path)
 args = parser.parse_args()
@@ -34,7 +35,7 @@ try:
     else:
         note = args.note_file.read_text(encoding="utf-8-sig") if args.note_file else args.note
         result = state.mutate({"lessonId": args.lesson, "action": args.action,
-                               "expectedRevision": args.revision, "stepId": args.step, "note": note}, actor="tutor")
+                               "expectedRevision": args.revision, "stepId": args.step, "item": args.item, "note": note}, actor="tutor")
     print(json.dumps(result, ensure_ascii=True, indent=2))
 except (state.StateError, OSError, ValueError) as exc:
     print(str(exc), file=sys.stderr)

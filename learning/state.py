@@ -156,11 +156,25 @@ def _save(before, after, event):
         handle.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
+def _record_verification(state, verification, **where):
+    """Keep tool results apart from the learner's confirmation, including checks that could not run."""
+    if not verification:
+        return
+    passed = [i["label"] + "：" + i["detail"] for i in verification["items"] if i["ok"]]
+    unknown = [i["label"] + "：" + i["detail"] for i in verification["items"] if i["ok"] is None and i["required"]]
+    if passed:
+        state["evidence"].append({"at": now(), "kind": "tool_verified", **where,
+                                  "summary": "自動檢查練習檔：" + "；".join(passed)})
+    if unknown:
+        state["evidence"].append({"at": now(), "kind": "tool_unverified", **where,
+                                  "summary": "必要檢查無法執行，未經工具驗證：" + "；".join(unknown)})
+
+
 def mutate(payload, *, actor="learner", verification=None):
     lesson_id = payload.get("lessonId")
     lesson = lesson_by_id(lesson_id)
     action = payload.get("action")
-    if action not in {"activate_lesson", "confirm_step", "add_note"}:
+    if action not in {"activate_lesson", "confirm_step", "add_note", "confirm_challenge", "record_physical"}:
         raise StateError("不支援這個進度操作。")
     with locked():
         before = progress()
@@ -175,22 +189,17 @@ def mutate(payload, *, actor="learner", verification=None):
                 state["status"] = "in_progress"
                 state["startedAt"] = now()
         elif action == "confirm_step":
+            # Any step may be confirmed in any order; each one is still recorded only once.
             step_id = payload.get("stepId")
-            if state["status"] == "completed":
-                raise StateError("本課已完成，可選擇複習或其他課程。")
-            if step_id != state["currentStep"]:
-                raise StateError("這不是目前待確認的步驟，請重新整理。", 409)
             ids = [step["id"] for step in lesson["steps"]]
             if step_id not in ids:
                 raise StateError("找不到這個操作步驟。")
+            if step_id in state["completedSteps"]:
+                raise StateError("這一步已經記錄過，請重新整理。", 409)
             state["completedSteps"] = [key for key in ids if key in set(state["completedSteps"]) | {step_id}]
             state["evidence"].append({"at": now(), "kind": "user_confirmed", "stepId": step_id,
                                       "summary": "學員確認已完成此步驟；不等同工具自動驗證。"})
-            if verification:
-                passed = [i["label"] + "：" + i["detail"] for i in verification["items"] if i["ok"]]
-                if passed:
-                    state["evidence"].append({"at": now(), "kind": "tool_verified", "stepId": step_id,
-                                              "summary": "自動檢查練習檔：" + "；".join(passed)})
+            _record_verification(state, verification, stepId=step_id)
             remaining = [key for key in ids if key not in state["completedSteps"]]
             state["status"] = "in_progress" if remaining else "completed"
             state.setdefault("startedAt", now())
@@ -199,6 +208,29 @@ def mutate(payload, *, actor="learner", verification=None):
                 state["completedAt"] = now()
             after["activeLesson"] = lesson_id
             event["stepId"] = step_id
+        elif action == "confirm_challenge":
+            if not lesson.get("challenge"):
+                raise StateError("本課沒有練習題。")
+            if state.get("challenge"):
+                raise StateError("本課練習題已經記錄過，請重新整理。", 409)
+            state["challenge"] = {"confirmedAt": now(), "actor": actor}
+            state["evidence"].append({"at": now(), "kind": "challenge_confirmed",
+                                      "summary": "學員確認已完成本課練習題；不計入主線步驟。"})
+            _record_verification(state, verification, challenge=True)
+            event["challenge"] = True
+        elif action == "record_physical":
+            # Physical work (fabrication, soldering, power-on) is only ever reported, never inferred.
+            item = payload.get("item")
+            known = {entry["id"] for entry in lesson.get("physicalResults", [])}
+            if item not in known:
+                raise StateError("本課沒有這個實體結果項目。")
+            note = payload.get("note", "")
+            if not isinstance(note, str) or not note.strip() or len(note) > 2000:
+                raise StateError("請填寫 1～2000 字的實際結果，例如板廠、日期、量測或照片位置。")
+            state.setdefault("physical", {})[item] = {"at": now(), "actor": actor, "note": note.strip()}
+            state["evidence"].append({"at": now(), "kind": "physical_reported", "item": item,
+                                      "summary": note.strip()})
+            event.update({"item": item, "note": note.strip()})
         else:
             note = payload.get("note", "")
             if not isinstance(note, str) or not note.strip() or len(note) > 4000:

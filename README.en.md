@@ -4,7 +4,7 @@
 
 [繁體中文](README.md) · [v0.1.0](https://github.com/kongbai0123/Kicad-7-Series/releases/tag/v0.1.0)
 
-A local learning dashboard for 15 KiCad lessons and 90 checkpoints. Follow one small task at a time, compare real KiCad screenshots and numbered annotations, and confirm your result before advancing. The upstream course uses KiCad 7; the guides were prepared with KiCad 10.0.7 in Traditional Chinese.
+A local learning dashboard for 15 KiCad lessons split into 33 sections and 90 small steps, plus a chapter 00 hotkey reference and an optional exercise per lesson. Each section is one page: steps on the left, real KiCad screenshots with numbered marks on the right. Any section can be opened directly, and steps can be confirmed in any order. The upstream course uses KiCad 7; the guides were prepared with KiCad 10.0.7 in Traditional Chinese.
 
 ![Learning dashboard with step instructions and numbered screenshots](docs/images/learning-page.jpg)
 
@@ -25,7 +25,7 @@ The launcher opens the local dashboard, normally at `http://127.0.0.1:8765/`. Us
 ## Learning and personal data
 
 1. Select a lesson and open its practice project. All 15 lessons use independent copies under `learning/workspaces/`.
-2. Follow the current instruction and its visible success criteria. Some steps include observation questions or file checks.
+2. Follow each step and its visible success criteria. Some steps include optional observation questions or file checks.
 3. Confirm a step only after performing it. To ask for help, copy the continuation message into an AI assistant that can access this repository and follow `AGENTS.md`.
 
 The dashboard is not an embedded AI chat and does not require a particular assistant product.
@@ -40,6 +40,7 @@ Original course directories retain their upstream paths, including names contain
 
 ```powershell
 python -m unittest discover -s learning -p "test_*.py" -v
+node --check learning/web/sections.js
 node --check learning/web/app.js
 python learning/validate_repository.py
 ```
