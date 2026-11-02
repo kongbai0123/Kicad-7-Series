@@ -1816,15 +1816,15 @@
     },
     {
       "id": "03",
-      "title": "建立與核對 Diya 原理圖",
+      "title": "從空白畫出 Diya 原理圖",
       "folder": "3_Schematics",
       "stage": "原理圖",
-      "goal": "理解 Diya 電路的主要功能區，練習元件屬性與正確接線。",
-      "context": "本系列主專案包含 ATtiny85、電池、LED、光敏電阻、麥克風與開關。本章附原理圖參考 PNG；按功能區學習，不要求一次完成所有操作。",
+      "goal": "從空白原理圖開始，依規格表畫出 Diya 的 9 個元件與 7 條連線。",
+      "context": "第 3～6 課都在你自己的 Diya 專案上接著做（learning/workspaces/diya）。本課附原作者的麵包板參考圖；作者完成的原理圖只當對照。每畫完一區就存檔並按「先檢查一次」，自動檢查會依規格表比對你畫的元件與連線。跑 ERC 會看到錯誤，第 5 課再處理。",
       "completionCriteria": [
-        "能在原理圖辨認供電、MCU、感測與 LED 功能區。",
-        "元件參考與數值分開，腳位及連線可對照參考圖。",
-        "已完成至少一個功能區的屬性與接線核對，並保存工作副本與證據。"
+        "9 個元件都放好，電阻數值依規格表填寫。",
+        "自動檢查顯示 9 個元件、7 條連線都符合規格表。",
+        "原理圖已存檔；ERC 的錯誤留到第 5 課處理。"
       ],
       "files": [
         {
@@ -1858,33 +1858,29 @@
       "steps": [
         {
           "id": "03-01",
-          "title": "開啟本課練習副本",
-          "action": "使用本課的「開啟練習專案」功能；在 KiCad 管理員開啟原理圖編輯器。",
-          "success": "已看到本課原理圖編輯器，專案路徑指向練習副本。",
-          "help": "先核對目前專案位於 learning/workspaces/03/，再開 Schematics.kicad_sch；同名編輯器不代表同一份檔案。若已開其他章，先儲存並關閉那個專案，避免在錯誤副本繼續。",
+          "kind": "setup",
+          "title": "建立你的 Diya 專案",
+          "action": "按「開啟練習專案」建立空白的 Diya 專案，再在 KiCad 管理員雙擊 Schematics.kicad_sch。",
+          "why": "第 3～6 課都在同一個專案上接著做：這課畫的原理圖，下一課會接著整理、檢查和指定封裝。",
+          "success": "原理圖編輯器的標題是 Schematics，畫布是空白圖框。",
+          "help": "按了沒反應時，先關掉其他課開著的 KiCad 專案再按一次。如果 KiCad 開到作者的 3_Schematics（畫面上已經有完整電路），表示開錯了，關閉後回學習頁重按。",
           "guide": [
             {
-              "where": "學習頁面（本頁）",
-              "do": "按頁首的「開啟練習專案」。如果 KiCad 已開著別的專案（例如第 1 課），先在那個 KiCad 視窗選「檔案 → 關閉專案」再按。",
-              "see": "跳出 KiCad 專案管理員，視窗標題是本課專案名稱加「KiCad 10.0」。"
+              "where": "學習頁面（本頁頁首）",
+              "do": "按「開啟練習專案」。第一次會建立你的 Diya 專案 learning/workspaces/diya，並開啟 KiCad 管理員。",
+              "see": "學習頁頁首寫著「本課從空白專案開始」。"
             },
             {
               "where": "KiCad 專案管理員",
-              "do": "雙擊左側已存在的 Schematics.kicad_sch，不需要「新建」檔案；也可用右側「原理圖編輯器」。",
-              "see": "開出一個新視窗，標題結尾是「原理圖編輯器」。",
+              "do": "點「原理圖編輯器」，或雙擊左側的 Schematics.kicad_sch。",
+              "see": "開出原理圖編輯器。",
               "mark": 1
             },
             {
-              "where": "原理圖編輯器",
-              "do": "如果出現舊版格式的黃色提示，先讀內容再儲存；已存成新格式時可能不再出現，無須為了對照截圖重新製造提示。",
-              "see": "顯示本課內容；有無黃色提示都不代替路徑與檔名核對。",
+              "where": "原理圖編輯器的畫布",
+              "do": "確認畫布上只有圖框，沒有任何元件。",
+              "see": "空白的圖框，等你開始畫。",
               "mark": 2
-            }
-          ],
-          "checks": [
-            {
-              "type": "project_open",
-              "editor": "sch"
             }
           ],
           "figures": [
@@ -1902,68 +1898,125 @@
               "role": "kicad10"
             },
             {
-              "image": "learning/assets/lesson-03/kicad10-schematic-editor.png",
-              "caption": "原理圖編輯器：上方黃色提示列只是舊版格式說明。",
+              "image": "learning/assets/lesson-01/kicad10-blank-schematic.png",
+              "caption": "空白原理圖的樣子（圖為第 1 課，標題名稱不同）。",
               "marks": [
                 {
                   "n": 2,
-                  "x": 30,
-                  "y": 7.1,
-                  "label": "黃色提示列：檔案來自舊版 KiCad"
+                  "x": 60,
+                  "y": 40,
+                  "label": "空白畫布：電路畫在這個圖框裡"
                 }
               ],
               "role": "kicad10"
             }
           ],
-          "pitfalls": [
-            "開到原教材資料夾而不是 learning/workspaces/ 的練習副本；先看視窗標題列的路徑。"
+          "checks": [
+            {
+              "type": "project_open"
+            }
           ],
-          "kind": "setup"
+          "pitfalls": [
+            "開到作者的教材資料夾（例如 3_Schematics）而不是 learning/workspaces/diya；先看 KiCad 管理員的路徑。"
+          ]
         },
         {
           "id": "03-02",
-          "title": "打開參考圖並辨認功能區",
-          "action": "開啟本課附帶的 Schematic_reference_file_PCBCUPID.png；在原理圖找到電池、ATtiny85、LED 與感測元件。",
-          "success": "能把參考圖中的主要元件對應到工作原理圖。",
-          "help": "這張參考圖是麵包板示意，不是 PCB 焊墊圖；先認功能區，再對元件型號，不從實物左右位置推斷腳號。",
-          "guide": [
+          "kind": "read",
+          "title": "認識要畫的電路",
+          "action": "對照麵包板參考圖、目標原理圖與規格表，認出供電、微控制器、光感、聲音、LED 五個功能區。",
+          "why": "先知道每一區由哪些元件組成、各接到 ATtiny85 的哪一腳，接下來每次只畫一區，比較不會接錯。",
+          "terms": [
             {
-              "where": "學習頁面（本頁）",
-              "do": "在本課「教材與成果」清單點「原理圖參考圖」。圖片會在新分頁開啟，保持開著，等一下要和編輯器對照。",
-              "see": "一張麵包板接線圖：麥克風、ATtiny 晶片、光敏電阻、LED、鈕扣電池與開關。"
+              "term": "功能區",
+              "meaning": "一組一起完成某件事的元件，例如光敏電阻和 10k 電阻一起量光線。"
             },
             {
-              "where": "參考圖右側與編輯器左側：供電",
-              "do": "參考圖找 COIN BATTERY 鈕扣電池與右下的小開關；編輯器找左側的 BT?（Battery_Cell）和 SW?A。",
-              "see": "電池與開關負責供電。",
+              "term": "網路",
+              "meaning": "電氣上相連的一組腳位；同一個網路的腳位彼此是通的。"
+            },
+            {
+              "term": "電源符號",
+              "meaning": "+3.3V、GND 這類符號。名稱相同的電源符號自動屬於同一個網路，不必畫長線連起來。"
+            }
+          ],
+          "success": "能說出五個功能區各有哪些元件、各接到 ATtiny85 的哪一腳。",
+          "help": "參考圖是麵包板示意，不是電路板；元件位置不必照抄。腳號以原理圖符號旁的數字為準。",
+          "guide": [
+            {
+              "where": "學習頁頁尾「本課資源、筆記與重新學習」",
+              "do": "打開後點「原理圖參考圖」，再展開「你的 Diya 練習專案」下的「Reactive Diya 規格表」。",
+              "see": "參考圖在新分頁打開；規格表列出 9 個元件與用途。"
+            },
+            {
+              "where": "供電區",
+              "do": "鈕扣電池 BT1 與滑動開關 SW1：電池負極經過開關接到 GND。",
+              "see": "這一區兩個元件。",
               "mark": 1
             },
             {
-              "where": "參考圖中央與編輯器中央：微控制器",
-              "do": "參考圖找黑色 ATTINY 晶片；編輯器找中央黃色方塊 U?（ATtiny85V-10P）。",
-              "see": "兩者是同一顆微控制器。",
+              "where": "微控制器區",
+              "do": "ATtiny85（U1）：第 8 腳 VCC 接 +3.3V、第 4 腳 GND 接地，其餘腳接各感測區與 LED。",
+              "see": "中間的方塊就是 U1。",
               "mark": 2
             },
             {
-              "where": "參考圖上方與編輯器右上：光感測",
-              "do": "參考圖找棕色圓片（光敏電阻）與它上方的電阻；編輯器找 LDR07 和它上方的 R?。",
-              "see": "兩顆電阻上下串接，中間一點會送到微控制器。",
+              "where": "光感區",
+              "do": "10k 電阻 R1 與光敏電阻 R2 串在 +3.3V 與 GND 之間，中點接 ATtiny85 第 7 腳（PB2）。",
+              "see": "中點標著 LDR。",
               "mark": 3
             },
             {
-              "where": "參考圖左下與編輯器右下：聲音感測",
-              "do": "參考圖找左下角黑色圓形麥克風與旁邊的電阻；編輯器找 MK?（Microphone_Condenser）與上方標 5.6k 的 R?。",
-              "see": "麥克風與一顆電阻成一組。",
+              "where": "聲音區",
+              "do": "5.6k 電阻 R3 供電給麥克風 MK1，兩者中點接第 2 腳（PB3）。",
+              "see": "中點標著 MIC。",
               "mark": 4
             },
             {
-              "where": "參考圖中央偏下與編輯器右側：LED",
-              "do": "參考圖找黃色 LED 與它下方的電阻；編輯器找 D?（LED）和下方的 R?。",
-              "see": "LED 與電阻串在一起，一端接微控制器、另一端接地。",
+              "where": "LED 區",
+              "do": "第 6 腳（PB1）接 LED 陽極，陰極經 470Ω 電阻 R4 接地。",
+              "see": "LED 上方標著 LED。",
               "mark": 5
             }
           ],
           "figures": [
+            {
+              "image": "learning/assets/lesson-03/diya-target-schematic.svg",
+              "caption": "目標樣子：作者的 Diya 原理圖（kicad-cli 輸出，移除了第 5 課才加的電源旗標與無連接旗標）。虛線框是作者畫的五個功能區。",
+              "role": "render",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 5.5,
+                  "y": 15,
+                  "label": "供電：BT1、SW1"
+                },
+                {
+                  "n": 2,
+                  "x": 21.5,
+                  "y": 15,
+                  "label": "微控制器：U1"
+                },
+                {
+                  "n": 3,
+                  "x": 51.5,
+                  "y": 15,
+                  "label": "光感：R1、R2"
+                },
+                {
+                  "n": 4,
+                  "x": 66.5,
+                  "y": 15,
+                  "label": "聲音：R3、MK1"
+                },
+                {
+                  "n": 5,
+                  "x": 96.5,
+                  "y": 14,
+                  "label": "LED：D1、R4"
+                }
+              ]
+            },
             {
               "image": "3_Schematics/Schematic_reference_file_PCBCUPID.png",
               "caption": "參考圖（麵包板）：五個功能區的實物位置。",
@@ -2000,350 +2053,619 @@
                 }
               ],
               "role": "upstream"
-            },
-            {
-              "image": "learning/assets/lesson-03/kicad10-schematic-circuit.png",
-              "caption": "原理圖編輯器：同樣五個功能區（編號與參考圖對應）。",
-              "marks": [
-                {
-                  "n": 1,
-                  "x": 6,
-                  "y": 31,
-                  "label": "供電：BT? 電池與 SW? 開關"
-                },
-                {
-                  "n": 2,
-                  "x": 40,
-                  "y": 54,
-                  "label": "微控制器：U? ATtiny85V-10P"
-                },
-                {
-                  "n": 3,
-                  "x": 78.7,
-                  "y": 26.5,
-                  "label": "光感測：R? 與 LDR07"
-                },
-                {
-                  "n": 4,
-                  "x": 64,
-                  "y": 85,
-                  "label": "聲音感測：MK? 麥克風與 R? 5.6k"
-                },
-                {
-                  "n": 5,
-                  "x": 79,
-                  "y": 45,
-                  "label": "LED 與限流電阻：D? 與 R?"
-                }
-              ],
-              "role": "kicad10"
             }
           ],
           "quiz": {
-            "question": "原理圖編輯器中，哪個符號對應參考圖裡的「光敏電阻」？",
+            "question": "ATtiny85 的 VCC 是第幾腳？",
             "options": [
-              "LDR07（R? 旁標示 LDR07）",
-              "BT?（Battery_Cell）",
-              "MK?（Microphone_Condenser）"
+              "第 8 腳",
+              "第 4 腳",
+              "第 1 腳"
             ],
             "answer": 0,
-            "explain": "LDR 是光敏電阻（Light Dependent Resistor）。BT? 是電池，MK? 是麥克風。"
+            "explain": "VCC 是第 8 腳、GND 是第 4 腳，目標原理圖 U1 的上下兩端標著腳號。"
           },
           "pitfalls": [
-            "用麵包板上的左右位置推斷腳號。"
-          ],
-          "kind": "read"
+            "照麵包板上的左右位置猜腳號；腳號要看符號旁的數字。"
+          ]
         },
         {
           "id": "03-03",
-          "title": "核對一個元件的參考與數值",
-          "action": "選擇一個電阻並開啟屬性；分別讀出參考編號、數值與符號庫名稱；與參考圖對照。",
-          "success": "能說明哪個欄位是 R 編號、哪個欄位是阻值。",
-          "help": "面板太窄時按 E 看完整欄位，讀完取消；R? 在本課未編號教材中是預期狀態，不應在這個只讀步驟任意重新編號。",
+          "kind": "build",
+          "title": "放電池與開關",
+          "action": "用「放置符號」放 Battery_Cell 與 SW_SPDT 各一個，按 Esc 結束，存檔。",
+          "why": "供電區最單純，先用它熟悉每一區都會重複的流程：放元件 → 改數值 → 接線 → 存檔 → 檢查。",
+          "success": "畫布上有 BT1（電池）與 SW1（開關），已存檔。",
+          "help": "選擇符號視窗沒出現時，先按 Esc 再把游標移到畫布上按 A。放錯元件就選取後按 Delete，再重新放。",
           "guide": [
             {
-              "where": "原理圖編輯器畫布",
-              "do": "用滑鼠滾輪放大到看清楚右下角，單擊 MK? 麥克風上方標著 5.6k 的電阻（只單擊一下，不要拖曳）。",
-              "see": "電阻被選取而高亮，左側「屬性」面板列出這顆電阻的欄位。",
-              "mark": 1
+              "where": "原理圖編輯器選單「放置 (P)」",
+              "do": "選「放置符號」（快捷鍵 A），篩選欄輸入 battery，選 Device 底下的 Battery_Cell，按確定後在圖框左側單擊放下，再按 Esc。",
+              "see": "出現 BT1 電池符號。",
+              "mark": 1,
+              "phase": "A 放元件"
             },
             {
-              "where": "左側「屬性」面板「欄位」區",
-              "do": "看「參考」這一列，只讀不改。",
-              "see": "參考：R?（問號代表這份教材的電阻還沒編號）。",
-              "mark": 2
+              "where": "選擇符號視窗的篩選欄",
+              "do": "再按 A，篩選欄輸入 SW_SPDT，選 Switch 底下名稱剛好是 SW_SPDT 的開關，放在電池下方，按 Esc。",
+              "see": "出現 SW1 開關符號。",
+              "mark": 2,
+              "phase": "A 放元件"
             },
             {
-              "where": "左側「屬性」面板「欄位」區",
-              "do": "看下一列「數值」。",
-              "see": "數值：5.6k（阻值）。",
-              "mark": 3
+              "where": "電池符號",
+              "do": "游標放在電池本體上按 E，「數值」可以填規格表上的 3.3V Cell（只是標示，不影響檢查），按確定。",
+              "see": "BT1 旁顯示你填的數值。",
+              "mark": 3,
+              "phase": "B 填數值並存檔"
             },
             {
-              "where": "左側「屬性」面板「欄位」區",
-              "do": "再下一列「庫鏈接」是這顆電阻使用的符號庫名稱（灰色字，不能在此修改）。",
-              "see": "庫鏈接：Device:R。",
-              "mark": 4
-            },
-            {
-              "where": "原理圖編輯器畫布",
-              "do": "想看同樣資料的對話框：電阻仍被選取時按 E（或雙擊電阻），開出「符號屬性」。左下角「庫鏈接」也顯示 Device:R。",
-              "see": "開出「符號屬性」對話框。",
-              "mark": 5
-            },
-            {
-              "where": "符號屬性對話框右下角",
-              "do": "看完按「取消 (C)」關閉，不要改任何欄位。",
-              "see": "對話框消失，回到原理圖。",
-              "mark": 6
-            },
-            {
-              "where": "參考圖（麵包板）左側",
-              "do": "對照參考圖：麥克風旁邊那顆綠、藍、紅色環的電阻，就是這顆 5.6k。",
-              "see": "原理圖的 5.6k 與參考圖麥克風旁的電阻是同一顆。"
+              "where": "鍵盤",
+              "do": "按 Ctrl+S 存檔。",
+              "see": "存檔後再進下一步接線。",
+              "phase": "B 填數值並存檔"
             }
           ],
           "figures": [
             {
-              "image": "learning/assets/lesson-03/kicad10-schematic-circuit.png",
-              "caption": "要單擊的 5.6k 電阻（接在麥克風上方）。",
+              "image": "learning/assets/lesson-01/kicad10-place-menu.png",
+              "caption": "放置選單：「放置符號」快捷鍵 A。",
               "marks": [
                 {
                   "n": 1,
-                  "x": 78.7,
-                  "y": 71.9,
-                  "label": "5.6k 電阻（R? 5.6k）：單擊選取"
+                  "x": 32.5,
+                  "y": 7.9,
+                  "label": "放置符號（A）"
                 }
               ],
               "role": "kicad10"
             },
             {
-              "image": "learning/assets/lesson-03/kicad10-properties-panel.png",
-              "caption": "選取電阻後的「屬性」面板。",
+              "image": "learning/assets/lesson-01/kicad10-choose-resistor.png",
+              "caption": "選擇符號視窗（圖為第 1 課找電阻的畫面）：在篩選欄輸入要找的名稱。",
               "marks": [
                 {
                   "n": 2,
-                  "x": 40,
-                  "y": 55.7,
-                  "label": "參考：R?"
-                },
-                {
-                  "n": 3,
-                  "x": 40,
-                  "y": 60.4,
-                  "label": "數值：5.6k"
-                },
-                {
-                  "n": 4,
-                  "x": 40,
-                  "y": 65,
-                  "label": "庫鏈接：Device:R"
+                  "x": 28,
+                  "y": 7.9,
+                  "label": "篩選欄：輸入 battery 或 SW_SPDT"
                 }
               ],
               "role": "kicad10"
             },
             {
-              "image": "learning/assets/lesson-03/kicad10-symbol-properties.png",
-              "caption": "按 E 開出的「符號屬性」對話框。",
+              "image": "learning/assets/lesson-01/kicad10-resistor-properties.png",
+              "caption": "符號屬性（圖為第 1 課的電阻）：「數值」欄。",
               "marks": [
                 {
-                  "n": 5,
-                  "x": 20.6,
-                  "y": 94.8,
-                  "label": "左下角「庫鏈接」：Device:R"
-                },
-                {
-                  "n": 6,
-                  "x": 91.1,
-                  "y": 88,
-                  "label": "取消 (C)：看完關閉"
+                  "n": 3,
+                  "x": 30,
+                  "y": 26.3,
+                  "label": "數值：可填 3.3V Cell"
                 }
               ],
               "role": "kicad10"
             }
           ],
-          "quiz": {
-            "question": "這顆電阻的「參考」與「數值」各是什麼？",
-            "options": [
-              "參考 R?、數值 5.6k",
-              "參考 5.6k、數值 R?",
-              "參考 Device:R、數值 5.6k"
-            ],
-            "answer": 0,
-            "explain": "參考編號用來區分零件（R1、R2…，這裡尚未編號所以是 R?），數值描述零件本身（5.6k 歐姆）。Device:R 是庫鏈接。"
-          },
           "pitfalls": [
-            "看到 R? 就自行重新編號；本課是只讀觀察。"
-          ],
-          "kind": "read"
+            "選到 Battery（多顆電池）而不是 Battery_Cell；規格表寫的是 Battery_Cell。",
+            "選到名稱相近的開關（例如 SW_SPDT_MSM）；要選剛好叫 SW_SPDT 的。"
+          ]
         },
         {
           "id": "03-04",
-          "title": "核對一段實際接線",
-          "action": "挑選 LED 限流電阻附近的一段線；從一個腳位沿線追到另一個腳位；放大確認線端接在腳位上。",
-          "success": "能指出這條線連接的兩個元件與腳位，且線端沒有懸空。",
-          "help": "不能只因紅點消失就判定接對網路；沿實際導線讀到兩端元件與腳號，交叉處沒有接點也不一定互連。",
+          "kind": "build",
+          "title": "接上供電線路",
+          "action": "放 +3.3V 與 GND 電源符號，用導線接好電池與開關，存檔後檢查。",
+          "why": "電池正極接到 +3.3V 網路，負極經開關接到 GND 網路；之後其他區只要接同名的電源符號，就會連到電池。",
+          "terms": [
+            {
+              "term": "電源符號",
+              "meaning": "+3.3V、GND 這類符號；名稱相同就屬於同一個網路。"
+            }
+          ],
+          "success": "電池 + 接 +3.3V、電池 − 接開關 C 腳、開關 B 腳接 GND、A 腳空著；自動檢查通過。",
+          "help": "找不到腳號時滾輪放大，腳位旁有小數字。檢查說「這些腳位應接在同一條線上」時，照訊息列出的腳位補線。",
           "guide": [
             {
-              "where": "原理圖編輯器中央",
-              "do": "找微控制器右側標 PB1 的腳（6 號腳），它的線往右接到 LED。單擊這條線的任何一段。",
-              "see": "整條線變亮，從 PB1 一直亮到 LED 上端。",
-              "mark": 1
+              "where": "原理圖編輯器選單「放置 (P)」",
+              "do": "選「放置電源符號」（快捷鍵 P），篩選欄輸入 +3.3V，選 power 底下的 +3.3V，放在電池上方，按 Esc；再按 P 放一個 GND 在開關下方。",
+              "see": "電池上方有 +3.3V、開關下方有 GND。",
+              "mark": 1,
+              "phase": "A 放電源符號"
             },
             {
-              "where": "LED 區塊",
-              "do": "沿線往下看：LED（D?）下端再接到下面的電阻 R?，這顆就是限流電阻。",
-              "see": "LED 與 R? 上下相連，中間沒有斷開。",
-              "mark": 2
+              "where": "原理圖編輯器選單「放置 (P)」",
+              "do": "選「繪製線」（快捷鍵 W），從 +3.3V 符號的端點畫到電池的 + 腳（1 號，上端），按 Esc。",
+              "see": "+3.3V 與電池 + 腳之間有一條線。",
+              "mark": 2,
+              "phase": "B 接線"
             },
             {
-              "where": "限流電阻 R?",
-              "do": "放大電阻兩端，確認線端接在腳位上。沒接線的腳位末端會有紅色小點（例如 ATtiny 的 5、2、1 腳），接好的腳位沒有紅點。",
-              "see": "這顆電阻兩端都沒有紅色小點。",
-              "mark": 3
+              "where": "電池與開關之間",
+              "do": "用 W 把電池 − 腳（2 號）接到開關的 C 腳（3 號），再把開關的 B 腳（2 號，單獨在一側的共用腳）接到 GND。A 腳（1 號）先空著。",
+              "see": "開關有兩條線，A 腳沒有線。",
+              "mark": 3,
+              "phase": "B 接線"
             },
             {
-              "where": "限流電阻下端",
-              "do": "沿電阻下端的線往右看，它接到右側一條垂直的線。",
-              "see": "電阻下端經過右邊的綠點，連到地線。",
-              "mark": 4
+              "where": "學習頁本步「自動檢查練習檔」",
+              "do": "回 KiCad 按 Ctrl+S，再回學習頁按「先檢查一次」。",
+              "see": "自動檢查顯示 2 個元件的連線符合規格表。",
+              "phase": "C 存檔並檢查"
             }
           ],
           "figures": [
             {
-              "image": "learning/assets/lesson-03/kicad10-schematic-circuit.png",
-              "caption": "LED 限流電阻這一段：PB1 → LED → R? → 地線。",
+              "image": "learning/assets/lesson-01/kicad10-place-menu.png",
+              "caption": "放置選單：「放置電源符號」快捷鍵 P、「繪製線」快捷鍵 W。",
+              "role": "kicad10",
               "marks": [
                 {
                   "n": 1,
-                  "x": 65.6,
-                  "y": 34.3,
-                  "label": "PB1 → LED 的這段線"
+                  "x": 34.5,
+                  "y": 11.0,
+                  "label": "放置電源符號（P）"
                 },
                 {
                   "n": 2,
-                  "x": 79,
-                  "y": 45,
-                  "label": "LED（D?）"
-                },
+                  "x": 30.5,
+                  "y": 14.1,
+                  "label": "繪製線（W）"
+                }
+              ]
+            },
+            {
+              "image": "learning/assets/lesson-03/diya-target-schematic.svg",
+              "caption": "目標樣子：供電區（框 1）。電池 + 接 +3.3V，− 經開關接 GND。",
+              "role": "render",
+              "marks": [
                 {
                   "n": 3,
-                  "x": 79,
-                  "y": 53,
-                  "label": "限流電阻 R?"
-                },
-                {
-                  "n": 4,
-                  "x": 95.6,
-                  "y": 62.3,
-                  "label": "右側綠點：接到地線"
+                  "x": 5.5,
+                  "y": 15,
+                  "label": "供電：BT1、SW1"
                 }
-              ],
-              "role": "kicad10"
+              ]
             }
           ],
-          "quiz": {
-            "question": "LED 的限流電阻是接在哪兩者之間？",
-            "options": [
-              "LED 下端與地線之間",
-              "PB1 與 PB2 之間",
-              "電池正極與開關之間"
-            ],
-            "answer": 0,
-            "explain": "PB1 的訊號先經過 LED，再經過這顆電阻到地線；電阻限制電流，保護 LED。"
-          },
-          "pitfalls": [
-            "只因紅點消失就判定接對；要沿線讀到兩端的元件與腳號。"
-          ],
-          "kind": "read"
-        },
-        {
-          "id": "03-05",
-          "title": "整理學到的電路區塊",
-          "action": "回到全圖，選定已核對的一個功能區；記下它的輸入、輸出及作用；儲存並截圖。",
-          "success": "已保存至少一個清楚的功能區截圖與用途說明。",
-          "help": "截圖工具開啟後要把區塊截清楚，將輸入、輸出、作用三句貼到學習筆記並儲存，不把觀察到的電路當成已上電測試。",
           "checks": [
+            {
+              "type": "netlist_matches",
+              "spec": "diya",
+              "parts": [
+                "BT1",
+                "SW1"
+              ]
+            },
             {
               "type": "saved_since_start",
               "required": false
             }
           ],
+          "pitfalls": [
+            "線只畫到腳位附近、沒有接在腳位端點上；放大看端點有沒有接上。",
+            "把開關的 A 腳（1 號）也接上；照規格表 A 腳要空著。",
+            "沒存檔就按「先檢查一次」；檢查讀的是存檔後的檔案。"
+          ]
+        },
+        {
+          "id": "03-05",
+          "kind": "build",
+          "title": "放 ATtiny85 並接上電源",
+          "action": "放 ATtiny85V-10P，把第 8 腳 VCC 接 +3.3V、第 4 腳 GND 接 GND，存檔後檢查。",
+          "why": "微控制器要先有電才能工作；VCC 和 GND 用電源符號接，就會和電池連在同一個網路。",
+          "terms": [
+            {
+              "term": "VCC／GND",
+              "meaning": "晶片的電源正極腳與接地腳。"
+            }
+          ],
+          "success": "U1 第 8 腳接 +3.3V、第 4 腳接 GND，其他腳先空著；自動檢查通過。",
+          "help": "腳位太小看不清時滾輪放大；第 8 腳在方塊上端、第 4 腳在下端。檢查說元件不在規格表時，確認選的是 ATtiny85V-10P。",
           "guide": [
             {
               "where": "原理圖編輯器",
-              "do": "按 Home 鍵縮放回整張圖。選一個你已核對過的區塊，本頁以「光感測」為例。",
-              "see": "整個電路縮到一個畫面。"
+              "do": "按 A，篩選欄輸入 ATtiny85V-10P，選 MCU_Microchip_ATtiny 底下的 ATtiny85V-10P，放在供電區右邊，按 Esc。",
+              "see": "出現黃色方塊 U1，四周有腳位與腳號。",
+              "phase": "A 放晶片"
             },
             {
-              "where": "光感測區塊上方",
-              "do": "找輸入：上方 R? 的上端接到 +3.3V（電池正極）。",
-              "see": "R? 上端有線一路接到 +3.3V 電源符號。",
-              "mark": 1
+              "where": "U1 上端",
+              "do": "按 P 放一個 +3.3V 在 U1 上方，用 W 接到第 8 腳（VCC）。",
+              "see": "第 8 腳接到 +3.3V。",
+              "phase": "B 接電源"
             },
             {
-              "where": "光感測區塊中間",
-              "do": "找輸出：R? 與 LDR07 之間的接點，有線往左再往下，接到 ATtiny 的 XTAL2/PB4（3 號腳）。",
-              "see": "接點處有綠點，線進到 PB4。",
-              "mark": 2
+              "where": "U1 下端",
+              "do": "按 P 放一個 GND 在 U1 下方，用 W 接到第 4 腳（GND）。其他腳先空著。",
+              "see": "第 4 腳接到 GND。",
+              "phase": "B 接電源"
             },
             {
-              "where": "光感測區塊下方",
-              "do": "找作用：LDR07 下端接到地線。光照改變時 LDR07 阻值變，中間接點的電壓跟著變，微控制器就能讀到亮度。",
-              "see": "LDR07 下端往右接到地線。",
-              "mark": 3
-            },
-            {
-              "where": "原理圖編輯器",
-              "do": "按 Ctrl+S 儲存，用截圖工具存下這個區塊，並在對話中回報輸入、輸出、作用各一句。",
-              "see": "標題列沒有未儲存標記，截圖已存檔。"
+              "where": "對照目標圖的微控制器區",
+              "do": "按 Ctrl+S，再回學習頁按「先檢查一次」。",
+              "see": "自動檢查顯示 3 個元件的連線符合規格表。",
+              "mark": 1,
+              "phase": "C 存檔並檢查"
             }
           ],
           "figures": [
             {
-              "image": "learning/assets/lesson-03/kicad10-schematic-circuit.png",
-              "caption": "光感測區塊的輸入、輸出與作用。",
+              "image": "learning/assets/lesson-03/diya-target-schematic.svg",
+              "caption": "目標樣子：微控制器區（框 2）。右側的 LED、LDR、MIC 是網路標籤，之後幾步才接。",
+              "role": "render",
               "marks": [
                 {
                   "n": 1,
-                  "x": 65,
-                  "y": 11.9,
-                  "label": "輸入：R? 上端接 +3.3V"
-                },
-                {
-                  "n": 2,
-                  "x": 65,
-                  "y": 20.5,
-                  "label": "輸出：中間接點接 PB4"
-                },
-                {
-                  "n": 3,
-                  "x": 78.7,
-                  "y": 26.5,
-                  "label": "作用：LDR07 隨光線改變阻值"
+                  "x": 21.5,
+                  "y": 15,
+                  "label": "微控制器：U1"
                 }
-              ],
-              "role": "kicad10"
+              ]
+            }
+          ],
+          "checks": [
+            {
+              "type": "netlist_matches",
+              "spec": "diya",
+              "parts": [
+                "BT1",
+                "SW1",
+                "U1"
+              ]
+            },
+            {
+              "type": "saved_since_start",
+              "required": false
             }
           ],
           "quiz": {
-            "question": "光感測區塊的輸出（R? 與 LDR07 之間的接點）接到 ATtiny85 的哪個腳？",
+            "question": "ATtiny85 的 GND 是第幾腳？",
             "options": [
-              "PB4（XTAL2/PB4，3 號腳）",
-              "PB1（6 號腳）",
-              "RESET（1 號腳）"
+              "第 4 腳",
+              "第 8 腳",
+              "第 5 腳"
             ],
             "answer": 0,
-            "explain": "這個接點的線往左下接到 XTAL2/PB4；PB1 接 LED，PB2 接麥克風。"
+            "explain": "第 4 腳是 GND、第 8 腳是 VCC。"
           },
-          "kind": "read"
+          "pitfalls": [
+            "選到 ATtiny85-20P 等相近型號；規格表是 ATtiny85V-10P，檢查會依符號名稱比對。",
+            "把 GND 接到第 8 腳；先放大看腳旁的數字與 VCC、GND 字樣。"
+          ]
+        },
+        {
+          "id": "03-06",
+          "kind": "build",
+          "title": "光感區：分壓與網路標籤",
+          "action": "放 10k 電阻與光敏電阻 LDR07 串成分壓，中點用網路標籤 LDR 接到 ATtiny85 第 7 腳，存檔後檢查。",
+          "why": "光敏電阻的阻值隨亮度改變；和 10k 電阻串起來，中點電壓就跟著亮暗變，ATtiny85 讀這個電壓判斷亮度。",
+          "terms": [
+            {
+              "term": "分壓",
+              "meaning": "兩個電阻串在電源與地之間，中點電壓介於兩者之間，比例由兩個阻值決定。"
+            },
+            {
+              "term": "網路標籤",
+              "meaning": "寫在線上的名字；名字相同的標籤自動相連，可以不必畫長線。"
+            }
+          ],
+          "success": "R1（10k）與 R2（LDR07）串在 +3.3V 與 GND 之間，中點經 LDR 標籤接到 U1 第 7 腳；自動檢查通過。",
+          "help": "標籤要放在線上或線端才有作用。檢查若說某些腳位應接在一起，先確認兩個標籤名稱完全相同。",
+          "guide": [
+            {
+              "where": "原理圖編輯器",
+              "do": "按 A 放 Device 的 R，按 E 把「數值」改成 10k；再按 A，篩選欄輸入 LDR07，選 Sensor_Optical 底下的 LDR07，放在 10k 下方。",
+              "see": "出現 R1（10k）與 R2（LDR07）。",
+              "mark": 1,
+              "phase": "A 放元件"
+            },
+            {
+              "where": "光感區",
+              "do": "按 P 放一個 +3.3V 接 R1 上端；用 W 把 R1 下端接到 R2 上端；R2 下端接一個 GND。",
+              "see": "兩個電阻串在 +3.3V 與 GND 之間。",
+              "phase": "B 接線"
+            },
+            {
+              "where": "原理圖編輯器選單「放置 (P)」",
+              "do": "選「放置網路標籤」（快捷鍵 L），名稱輸入 LDR，放在 R1 與 R2 之間的線上。再從 U1 第 7 腳（PB2）畫一小段線，在線端放第二個 LDR 標籤。",
+              "see": "分壓中點與第 7 腳各有一個 LDR 標籤。",
+              "mark": 2,
+              "phase": "B 接線"
+            },
+            {
+              "where": "對照目標圖的光感區",
+              "do": "按 Ctrl+S，再回學習頁按「先檢查一次」。",
+              "see": "自動檢查顯示 5 個元件的連線符合規格表。",
+              "mark": 3,
+              "phase": "C 存檔並檢查"
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-01/kicad10-resistor-properties.png",
+              "caption": "符號屬性（圖為第 1 課的電阻）：「數值」欄填 10k。",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 30,
+                  "y": 26.3,
+                  "label": "數值：把 R 改成 1k"
+                }
+              ],
+              "role": "kicad10"
+            },
+            {
+              "image": "learning/assets/lesson-01/kicad10-place-menu.png",
+              "caption": "放置選單：「放置網路標籤」快捷鍵 L。",
+              "role": "kicad10",
+              "marks": [
+                {
+                  "n": 2,
+                  "x": 34.5,
+                  "y": 29.9,
+                  "label": "放置網路標籤（L）"
+                }
+              ]
+            },
+            {
+              "image": "learning/assets/lesson-03/diya-target-schematic.svg",
+              "caption": "目標樣子：光感區（框 3）。中點的 LDR 標籤和 U1 第 7 腳的 LDR 標籤相連。",
+              "role": "render",
+              "marks": [
+                {
+                  "n": 3,
+                  "x": 51.5,
+                  "y": 15,
+                  "label": "光感：R1、R2"
+                }
+              ]
+            }
+          ],
+          "checks": [
+            {
+              "type": "netlist_matches",
+              "spec": "diya",
+              "parts": [
+                "BT1",
+                "SW1",
+                "U1",
+                "R1",
+                "R2"
+              ]
+            },
+            {
+              "type": "saved_since_start",
+              "required": false
+            }
+          ],
+          "pitfalls": [
+            "兩個標籤名稱拼法不同（例如 LDR 與 ldr）；名稱要完全一樣才會相連。",
+            "標籤沒有碰到線端；標籤要放在線上或線端。"
+          ]
+        },
+        {
+          "id": "03-07",
+          "kind": "build",
+          "title": "聲音區：麥克風與偏壓電阻",
+          "action": "放 5.6k 電阻與 Microphone_Condenser，中點用網路標籤 MIC 接到 ATtiny85 第 2 腳，存檔後檢查。",
+          "why": "駐極體麥克風要經電阻供電才能輸出聲音訊號；訊號出現在電阻與麥克風之間，送到 ATtiny85 讀取。",
+          "success": "R3（5.6k）接 +3.3V 與麥克風 +，麥克風 − 接地，中點經 MIC 標籤接到 U1 第 2 腳；自動檢查通過。",
+          "help": "麥克風符號的 + 與 − 在腳位旁有標示；放大看清楚再接。",
+          "guide": [
+            {
+              "where": "原理圖編輯器",
+              "do": "按 A 放 Device 的 R，數值改成 5.6k；再按 A，篩選欄輸入 Microphone_Condenser，選 Device 底下的 Microphone_Condenser，放在 5.6k 下方。",
+              "see": "出現 R3（5.6k）與 MK1。",
+              "phase": "A 放元件"
+            },
+            {
+              "where": "聲音區",
+              "do": "5.6k 上端接一個 +3.3V；下端接麥克風 + 腳（2 號）；麥克風 − 腳（1 號）接 GND。",
+              "see": "麥克風 + 在上、− 接地。",
+              "phase": "B 接線"
+            },
+            {
+              "where": "聲音區與 U1",
+              "do": "按 L 在 5.6k 與麥克風之間的線上放標籤 MIC；從 U1 第 2 腳（PB3）畫一小段線，線端放第二個 MIC。",
+              "see": "兩個 MIC 標籤。",
+              "phase": "B 接線"
+            },
+            {
+              "where": "對照目標圖的聲音區",
+              "do": "按 Ctrl+S，再回學習頁按「先檢查一次」。",
+              "see": "自動檢查顯示 7 個元件的連線符合規格表。",
+              "mark": 1,
+              "phase": "C 存檔並檢查"
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-03/diya-target-schematic.svg",
+              "caption": "目標樣子：聲音區（框 4）。",
+              "role": "render",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 66.5,
+                  "y": 15,
+                  "label": "聲音：R3、MK1"
+                }
+              ]
+            }
+          ],
+          "checks": [
+            {
+              "type": "netlist_matches",
+              "spec": "diya",
+              "parts": [
+                "BT1",
+                "SW1",
+                "U1",
+                "R1",
+                "R2",
+                "R3",
+                "MK1"
+              ]
+            },
+            {
+              "type": "saved_since_start",
+              "required": false
+            }
+          ],
+          "pitfalls": [
+            "麥克風正負接反；+ 腳（2 號）接電阻，− 腳（1 號）接 GND。",
+            "把 MIC 接到第 3 腳；PB3 是第 2 腳，以符號上的數字為準。"
+          ]
+        },
+        {
+          "id": "03-08",
+          "kind": "build",
+          "title": "LED 區與限流電阻",
+          "action": "放 LED 與 470Ω 電阻；LED 陽極用網路標籤 LED 接到 ATtiny85 第 6 腳，陰極經電阻接地，存檔後檢查。",
+          "why": "ATtiny85 第 6 腳輸出電壓點亮 LED；470Ω 電阻限制電流，保護 LED 與晶片腳位。",
+          "terms": [
+            {
+              "term": "限流電阻",
+              "meaning": "和 LED 串聯、限制電流大小的電阻。"
+            }
+          ],
+          "success": "LED 陽極接第 6 腳、陰極經 470Ω 接地；自動檢查顯示 9 個元件、7 條連線都符合規格表。",
+          "help": "LED 的 A（陽極）是 2 號腳、K（陰極）是 1 號腳。電阻數值會被比對，470 與 470R 都可以。",
+          "guide": [
+            {
+              "where": "原理圖編輯器",
+              "do": "按 A 放 Device 的 LED；再放一個 R，數值改成 470。",
+              "see": "出現 D1 與 R4（470）。",
+              "phase": "A 放元件"
+            },
+            {
+              "where": "LED 區",
+              "do": "LED 陰極 K（1 號）接 R4，R4 另一端接 GND；按 L 在 LED 陽極 A（2 號）的線端放標籤 LED。",
+              "see": "LED → R4 → GND。",
+              "phase": "B 接線"
+            },
+            {
+              "where": "U1 第 6 腳",
+              "do": "從 U1 第 6 腳（PB1）畫一小段線，線端放第二個 LED 標籤。",
+              "see": "兩個 LED 標籤相連。",
+              "phase": "B 接線"
+            },
+            {
+              "where": "對照目標圖的 LED 區",
+              "do": "按 Ctrl+S，再回學習頁按「先檢查一次」。",
+              "see": "自動檢查顯示 9 個元件、7 條連線都符合規格表。",
+              "mark": 1,
+              "phase": "C 存檔並檢查"
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-03/diya-target-schematic.svg",
+              "caption": "目標樣子：LED 區（框 5）。",
+              "role": "render",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 96.5,
+                  "y": 14,
+                  "label": "LED：D1、R4"
+                }
+              ]
+            }
+          ],
+          "checks": [
+            {
+              "type": "netlist_matches",
+              "spec": "diya"
+            },
+            {
+              "type": "saved_since_start",
+              "required": false
+            }
+          ],
+          "pitfalls": [
+            "LED 方向接反：陽極 A 是 2 號腳、陰極 K 是 1 號腳。",
+            "把 470 打成 47 或 4.7k；電阻數值會被比對。"
+          ]
+        },
+        {
+          "id": "03-09",
+          "kind": "build",
+          "title": "批註編號、核對並存檔",
+          "action": "用「工具 → 批註原理圖...」確認每個元件都有編號，存檔後做最後一次完整檢查。",
+          "why": "每個元件都要有唯一的編號（R1、R2…）；之後指定封裝、畫電路板都靠編號對應。",
+          "terms": [
+            {
+              "term": "批註",
+              "meaning": "KiCad 把 R?、U? 這類未編號的參考改成 R1、U1；新版放元件時通常已自動編號。"
+            }
+          ],
+          "success": "所有元件都有編號；自動檢查顯示 9 個元件、7 條連線符合規格表，檔案已存檔。",
+          "help": "圖上沒有 R?、U? 這類問號時，批註可以略過。檢查若列出問題，照訊息指出的元件或腳位修正後再檢查。",
+          "guide": [
+            {
+              "where": "原理圖編輯器選單「工具 (T)」",
+              "do": "選「批註原理圖...」，依對話框執行批註；圖上已經沒有 R?、U? 時可以直接關閉。",
+              "see": "圖上的參考都是 R1、U1 這類數字。",
+              "mark": 1
+            },
+            {
+              "where": "原理圖編輯器",
+              "do": "按 Home 看全圖，對照規格表：9 個元件、電阻數值都對。",
+              "see": "9 個元件都在。"
+            },
+            {
+              "where": "學習頁本步「自動檢查練習檔」",
+              "do": "按 Ctrl+S，再按「先檢查一次」。現在跑 ERC 會看到錯誤，這是第 5 課的內容，先不用處理。",
+              "see": "自動檢查全部通過。"
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-06/kicad10-tools-menu.png",
+              "caption": "工具選單：「批註原理圖...」。",
+              "role": "kicad10",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 46,
+                  "y": 46.6,
+                  "label": "批註原理圖..."
+                }
+              ]
+            }
+          ],
+          "checks": [
+            {
+              "type": "netlist_matches",
+              "spec": "diya"
+            },
+            {
+              "type": "saved_since_start"
+            }
+          ],
+          "quiz": {
+            "question": "現在跑 ERC 會看到錯誤，該怎麼辦？",
+            "options": [
+              "先記下來，第 5 課再處理",
+              "刪掉有錯誤的元件",
+              "關掉 ERC 規則"
+            ],
+            "answer": 0,
+            "explain": "第 5 課會說明原因，用電源旗標與無連接旗標正確處理。"
+          },
+          "pitfalls": [
+            "看到 ERC 錯誤就急著刪線；電源旗標與不用的腳位留到第 5 課處理。"
+          ]
         }
       ],
       "sections": [
         {
           "id": "03-s1",
-          "title": "開啟並對照參考圖",
-          "point": "先用參考圖認出電路的五個功能區。",
+          "title": "開始並認識電路",
+          "point": "建立自己的 Diya 專案，先看懂要畫的五個功能區。",
           "steps": [
             "03-01",
             "03-02"
@@ -2351,25 +2673,62 @@
         },
         {
           "id": "03-s2",
-          "title": "核對元件與接線",
-          "point": "讀懂一個元件和一段線，再整理一個電路區塊。",
+          "title": "供電：電池與開關",
+          "point": "放電池與開關，接上 +3.3V 與 GND。",
           "steps": [
             "03-03",
-            "03-04",
+            "03-04"
+          ]
+        },
+        {
+          "id": "03-s3",
+          "title": "微控制器",
+          "point": "放 ATtiny85，先把電源腳接好。",
+          "steps": [
             "03-05"
+          ]
+        },
+        {
+          "id": "03-s4",
+          "title": "感測：光與聲音",
+          "point": "兩組分壓電路，用網路標籤接到 ATtiny85。",
+          "steps": [
+            "03-06",
+            "03-07"
+          ]
+        },
+        {
+          "id": "03-s5",
+          "title": "LED 與收尾",
+          "point": "接上 LED，批註編號並完成整張圖的檢查。",
+          "steps": [
+            "03-08",
+            "03-09"
           ]
         }
       ],
       "challenge": {
-        "title": "追一條感測訊號到 MCU",
-        "goal": "從光敏電阻 R2 沿線追到 ATtiny85 的腳位。",
+        "title": "收起提示重畫光感區",
+        "goal": "刪掉光感區，只看規格表把它重新畫好。",
         "tasks": [
-          "放大 R2 與上方電阻的中間節點。",
-          "沿線追到 ATtiny85，讀出腳號與腳名。"
+          "選取 R1、R2、相連的線和兩個 LDR 標籤，按 Delete 刪除。",
+          "不看本課步驟，依規格表重新放元件、接線與標籤。",
+          "存檔後執行檢查。"
         ],
         "success": [
-          "寫下「R2 ↔ ATtiny85 第 ? 腳（腳名）」。"
-        ]
+          "自動檢查顯示 9 個元件、7 條連線都符合規格表。"
+        ],
+        "checks": [
+          {
+            "type": "netlist_matches",
+            "spec": "diya"
+          }
+        ],
+        "hint": "卡住時再打開本課 3.4 節對照。"
+      },
+      "practice": {
+        "project": "diya",
+        "startFrom": null
       }
     },
     {
@@ -2377,12 +2736,12 @@
       "title": "整理原理圖與圖框",
       "folder": "4_Prettify_Schematics",
       "stage": "原理圖",
-      "goal": "調整元件、文字與文件資訊，讓原理圖容易閱讀且連線保持正確。",
-      "context": "本章附 template.kicad_wks 自訂圖框。整理的目的在清楚表達電路，不把純視覺變更當成電氣正確性驗證。",
+      "goal": "整理你的 Diya 原理圖並填好圖框資訊，同時確認連線完全沒變。",
+      "context": "整理只改位置與文字，不改接線。每次整理後都可以按「先檢查一次」，確認元件與連線仍符合規格表。本章附 template.kicad_wks 自訂圖框，只供參考。",
       "completionCriteria": [
-        "參考編號、數值與導線易於辨識，主要文字不重疊。",
-        "一個功能區已完成排列整理，連線端點仍正確。",
-        "圖框資訊與工作副本已儲存。"
+        "參考、數值與導線容易辨識，主要文字不重疊。",
+        "圖框填好你的標題、日期與修訂。",
+        "自動檢查確認整理後連線仍符合規格表，檔案已存檔。"
       ],
       "files": [
         {
@@ -2416,33 +2775,29 @@
       "steps": [
         {
           "id": "04-01",
-          "title": "開啟本課練習副本",
-          "action": "使用本課的「開啟練習專案」功能；在 KiCad 管理員開啟原理圖編輯器。",
-          "success": "已看到本課原理圖編輯器，專案路徑指向練習副本。",
-          "help": "先核對目前專案位於 learning/workspaces/04/，再開 Schematics.kicad_sch；同名編輯器不代表同一份檔案。若已開其他章，先儲存並關閉那個專案，避免在錯誤副本繼續。",
+          "kind": "setup",
+          "title": "開啟你的 Diya 專案",
+          "action": "按「開啟練習專案」打開你的 Diya 專案，再在 KiCad 管理員雙擊 Schematics.kicad_sch。",
+          "why": "本課接著整理你第 3 課畫的原理圖。",
+          "success": "原理圖編輯器的標題是 Schematics，畫面是你自己的 Diya 原理圖。",
+          "help": "如果 KiCad 開到作者的教材資料夾，先關閉那個專案，回學習頁重按「開啟練習專案」。還沒有自己的專案時，頁面會讓你選擇回第 3 課從頭做，或改用作者起點。",
           "guide": [
             {
-              "where": "學習頁面（本頁）",
-              "do": "按頁首的「開啟練習專案」。如果 KiCad 已開著別的專案（例如第 1 課），先在那個 KiCad 視窗選「檔案 → 關閉專案」再按。",
-              "see": "跳出 KiCad 專案管理員，視窗標題是本課專案名稱加「KiCad 10.0」。"
+              "where": "學習頁面（本頁頁首）",
+              "do": "按「開啟練習專案」。接著你第 3 課的 Diya 專案。",
+              "see": "學習頁頁首寫出本課從哪裡接續。"
             },
             {
               "where": "KiCad 專案管理員",
-              "do": "雙擊左側已存在的 Schematics.kicad_sch，不需要「新建」檔案；也可用右側「原理圖編輯器」。",
-              "see": "開出一個新視窗，標題結尾是「原理圖編輯器」。",
+              "do": "點「原理圖編輯器」，或雙擊左側的 Schematics.kicad_sch。",
+              "see": "開出原理圖編輯器。",
               "mark": 1
             },
             {
               "where": "原理圖編輯器",
-              "do": "如果出現舊版格式的黃色提示，先讀內容再儲存；已存成新格式時可能不再出現，無須為了對照截圖重新製造提示。",
-              "see": "顯示本課內容；有無黃色提示都不代替路徑與檔名核對。",
+              "do": "看畫面是不是你上一課做完的原理圖；上方若有黃色提示列，只是檔案格式說明。",
+              "see": "看到你自己的 Diya 原理圖。",
               "mark": 2
-            }
-          ],
-          "checks": [
-            {
-              "type": "project_open",
-              "editor": "sch"
             }
           ],
           "figures": [
@@ -2473,45 +2828,49 @@
               "role": "kicad10"
             }
           ],
-          "pitfalls": [
-            "開到原教材資料夾而不是 learning/workspaces/ 的練習副本；先看視窗標題列的路徑。"
+          "checks": [
+            {
+              "type": "project_open"
+            }
           ],
-          "kind": "setup"
+          "pitfalls": [
+            "開到作者的教材資料夾（例如 3_Schematics）而不是 learning/workspaces/diya；先看 KiCad 管理員的路徑。"
+          ]
         },
         {
           "id": "04-02",
           "title": "先找一處閱讀困難的位置",
-          "action": "放大元件密集處；挑選一處文字重疊、線路曲折或間距太小的位置；保留修改前截圖。",
-          "success": "畫面中有一個明確要整理的位置。",
+          "action": "按 Home 看全圖，在你的原理圖找一處文字重疊、線路繞遠或元件太擠的地方，先截圖保存。",
+          "success": "你的原理圖中有一個明確要整理的位置，修改前截圖已保存。",
           "help": "Windows 截圖進剪貼簿後，仍要貼到對話或另存成圖片檔；只有按過快捷鍵不等於已保存修改前證據。",
           "guide": [
             {
-              "where": "原理圖編輯器中央",
-              "do": "用滾輪放大功能區，從左到右看五個虛線框：電池、微控制器、光感測、聲音感測、LED。",
-              "see": "每個虛線框是一個功能區，名稱寫在框的左下角。"
+              "where": "原理圖編輯器",
+              "do": "按 Home 看全圖，從左到右看五個功能區。",
+              "see": "整張 Diya 原理圖。"
             },
             {
-              "where": "聲音感測區（第四個框）右側",
-              "do": "找文字貼到虛線邊框的地方：Microphone_Condenser 的字一直延伸到框線。",
-              "see": "文字尾端壓在虛線邊框上。",
+              "where": "範例圖：文字貼到邊框",
+              "do": "像範例這樣，文字貼到框線或其他文字的地方最需要整理。",
+              "see": "找到類似的位置。",
               "mark": 1
             },
             {
-              "where": "LED 區（最右框）右側",
-              "do": "再看「5mm Yellow LED」，字尾也貼著虛線邊框。",
-              "see": "同樣擠在邊框邊。",
+              "where": "範例圖：另一處",
+              "do": "線很長、繞來繞去，或元件彼此太近，也值得整理。",
+              "see": "選定一處要整理的位置。",
               "mark": 2
             },
             {
               "where": "你的螢幕",
-              "do": "選好其中一處，用截圖工具（Windows 內建 Win + Shift + S）存下修改前的畫面，下一步要比較。",
-              "see": "圖庫或剪貼簿有一張修改前截圖。"
+              "do": "用截圖工具（Windows 內建 Win + Shift + S）存下修改前的畫面。",
+              "see": "修改前截圖已存好。"
             }
           ],
           "figures": [
             {
               "image": "learning/assets/lesson-04/kicad10-schematic-units.png",
-              "caption": "整理前，文字擠在邊框的兩處。",
+              "caption": "範例：作者原理圖中文字貼到邊框的兩處（你的圖會不同）。",
               "marks": [
                 {
                   "n": 1,
@@ -2530,7 +2889,7 @@
             }
           ],
           "quiz": {
-            "question": "哪一個文字最貼近虛線邊框、讀起來最擠？",
+            "question": "範例圖中，哪一個文字最貼近虛線邊框？",
             "options": [
               "Microphone_Condenser",
               "BT1",
@@ -2542,12 +2901,13 @@
           "pitfalls": [
             "按了截圖快捷鍵卻沒有貼上或存檔，修改前的畫面沒保存下來。"
           ],
-          "kind": "read"
+          "kind": "read",
+          "why": "先選定要改哪裡並留下修改前的畫面，整理完才比得出差別。"
         },
         {
           "id": "04-03",
           "title": "調整元件與文字位置",
-          "action": "在工作副本移動選定元件或其文字，使參考與數值清楚；退出工具後放大檢查相鄰線端。",
+          "action": "移動選定的元件或文字，讓參考與數值清楚；退出工具後放大檢查線端，存檔後檢查連線沒變。",
           "success": "文字不再互相遮擋，調整處連線仍接在正確腳位。",
           "help": "若整個符號跟著動而非文字，先 Esc 或 Ctrl+Z；放大後直接指向欄位文字再移動，線端斷開要立即復原。",
           "guide": [
@@ -2570,15 +2930,15 @@
             },
             {
               "where": "接點與線端",
-              "do": "放大檢查旁邊的接點和腳位：線端仍接在腳位上，綠點仍在。若有線斷開，馬上按 Ctrl+Z 復原。",
-              "see": "腳位與線仍相連，沒有出現新的紅色小點。",
+              "do": "放大檢查旁邊的接點和腳位：線端仍接在腳位上。若有線斷開，馬上按 Ctrl+Z 復原。按 Ctrl+S 後回學習頁按「先檢查一次」。",
+              "see": "自動檢查仍顯示 7 條連線符合規格表。",
               "mark": 3
             }
           ],
           "figures": [
             {
               "image": "learning/assets/lesson-04/kicad10-schematic-units.png",
-              "caption": "移動文字與檢查線端的位置。",
+              "caption": "範例：移動文字與檢查線端的位置（圖為作者原理圖）。",
               "marks": [
                 {
                   "n": 1,
@@ -2616,73 +2976,59 @@
             "想移文字卻整個符號一起動；先 Esc 或 Ctrl+Z，再指向欄位文字。",
             "移動後線端斷開沒有發現。"
           ],
-          "kind": "build"
+          "kind": "build",
+          "why": "整理是為了讓人一眼看懂電路；但只能動位置，不能動到接線。",
+          "checks": [
+            {
+              "type": "netlist_matches",
+              "spec": "diya"
+            }
+          ]
         },
         {
           "id": "04-04",
-          "title": "檢查圖框與文件資訊",
-          "action": "開啟頁面設定；查看標題、日期、版本等欄位及圖框設定；確認本章 template.kicad_wks 的用途。",
-          "success": "能在圖框中找到文件標題與版本等資訊。",
-          "help": "頁面設定與原理圖設定是不同視窗；這步看的是圖框資訊，不要因找到 template.kicad_wks 就覆蓋目前的圖框。",
+          "kind": "build",
+          "title": "填寫圖框資訊",
+          "action": "開啟「檔案 → 頁面設定...」，在標題欄填上你的標題、日期與修訂，按確定。",
+          "why": "圖框記錄這張圖是什麼、哪一版、誰畫的；交給別人或日後修改時，靠它對上正確的版本。",
+          "success": "圖框右下角顯示你填的標題、日期與修訂。",
+          "help": "頁面設定與原理圖設定是不同視窗。本章附的 template.kicad_wks 是自訂圖框檔，這一步不用套用。",
           "guide": [
             {
               "where": "原理圖編輯器選單列",
-              "do": "點最左邊的「檔案 (F)」，在選單中選「頁面設定...」（在「原理圖設定...」下方）。",
-              "see": "開出標題為「頁面設定」的對話框。",
+              "do": "點「檔案 (F)」，選「頁面設定...」（在「原理圖設定...」下方）。",
+              "see": "開出頁面設定對話框。",
               "mark": 1
             },
             {
-              "where": "頁面設定對話框右側「標題欄」",
-              "do": "只看不改：發行日期、修訂、標題、廠商與註釋 1 這幾欄。",
-              "see": "發行日期 2023-02-27、修訂 v1、標題 Digital Diya、廠商 pcbcupid。",
-              "mark": 2
-            },
-            {
-              "where": "頁面設定對話框右上「圖面圖頁」",
-              "do": "看「檔案」欄。本章附的 template.kicad_wks 是自訂圖框檔，要套用須在這一欄指定；目前這一欄是空白。",
-              "see": "「檔案」欄為空白，代表尚未套用自訂圖框。這步只確認用途，不要載入。",
-              "mark": 6
-            },
-            {
-              "where": "頁面設定對話框右下角",
-              "do": "看完按「取消 (C)」關閉，不要按「確定」。",
-              "see": "對話框消失，回到原理圖。"
-            },
-            {
-              "where": "原理圖編輯器畫面右下角",
-              "do": "對照圖框右下角的標題欄：標題、日期、修訂就印在這裡。標誌與網址是放在圖上的圖片與文字框。",
-              "see": "標題欄與對話框內的資料一致。",
-              "mark": 7
-            },
-            {
-              "where": "對照圖：頁面設定對話框：只看不改，按「取消」關閉。",
-              "do": "對照標記找到「修訂」，在自己的視窗讀出同一欄位或位置；圖中數值與選取狀態僅作參考，不要求先改成相同。",
-              "see": "能指認該位置；欄位不存在或版本不同時回報完整視窗畫面。",
-              "mark": 3
-            },
-            {
-              "where": "對照圖：頁面設定對話框：只看不改，按「取消」關閉。",
-              "do": "對照標記找到「標題」，在自己的視窗讀出同一欄位或位置；圖中數值與選取狀態僅作參考，不要求先改成相同。",
-              "see": "能指認該位置；欄位不存在或版本不同時回報完整視窗畫面。",
+              "where": "頁面設定的標題欄",
+              "do": "「標題」填 Diya 或你自己的名稱。",
+              "see": "標題欄有你的文字。",
               "mark": 4
             },
             {
-              "where": "對照圖：頁面設定對話框：只看不改，按「取消」關閉。",
-              "do": "對照標記找到「廠商」，在自己的視窗讀出同一欄位或位置；圖中數值與選取狀態僅作參考，不要求先改成相同。",
-              "see": "能指認該位置；欄位不存在或版本不同時回報完整視窗畫面。",
+              "where": "頁面設定的標題欄",
+              "do": "「發行日期」填今天的日期。",
+              "see": "日期已填。",
+              "mark": 2
+            },
+            {
+              "where": "頁面設定的標題欄",
+              "do": "「修訂」填 v1；之後改版再遞增。",
+              "see": "修訂已填。",
+              "mark": 3
+            },
+            {
+              "where": "頁面設定的標題欄",
+              "do": "「廠商」可以填你的名字，也可以留空；填完按「確定」，再按 Ctrl+S。",
+              "see": "對話框關閉。",
               "mark": 5
             },
             {
-              "where": "對照圖：圖框右下角的標題欄。",
-              "do": "對照標記找到「發行日期 2023-02-27」，在自己的視窗讀出同一欄位或位置；圖中數值與選取狀態僅作參考，不要求先改成相同。",
-              "see": "能指認該位置；欄位不存在或版本不同時回報完整視窗畫面。",
-              "mark": 8
-            },
-            {
-              "where": "對照圖：圖框右下角的標題欄。",
-              "do": "對照標記找到「修訂 v1」，在自己的視窗讀出同一欄位或位置；圖中數值與選取狀態僅作參考，不要求先改成相同。",
-              "see": "能指認該位置；欄位不存在或版本不同時回報完整視窗畫面。",
-              "mark": 9
+              "where": "原理圖編輯器右下角",
+              "do": "看圖框右下角的標題欄。",
+              "see": "顯示你剛填的標題、日期與修訂。",
+              "mark": 6
             }
           ],
           "figures": [
@@ -2701,7 +3047,7 @@
             },
             {
               "image": "learning/assets/lesson-04/kicad10-page-settings.png",
-              "caption": "頁面設定對話框：只看不改，按「取消」關閉。",
+              "caption": "頁面設定對話框（圖為作者的檔案）：右側標題欄。",
               "marks": [
                 {
                   "n": 2,
@@ -2726,56 +3072,27 @@
                   "x": 27.3,
                   "y": 48.2,
                   "label": "廠商"
-                },
-                {
-                  "n": 6,
-                  "x": 27.3,
-                  "y": 15.5,
-                  "label": "圖面圖頁「檔案」欄：目前空白"
                 }
               ],
               "role": "kicad10"
             },
             {
               "image": "learning/assets/lesson-04/kicad10-title-block.png",
-              "caption": "圖框右下角的標題欄。",
+              "caption": "圖框右下角的標題欄（圖為作者填的內容）。",
               "marks": [
                 {
-                  "n": 7,
+                  "n": 6,
                   "x": 29.8,
                   "y": 69.5,
-                  "label": "標題 Digital Diya"
-                },
-                {
-                  "n": 8,
-                  "x": 43.8,
-                  "y": 79.6,
-                  "label": "發行日期 2023-02-27"
-                },
-                {
-                  "n": 9,
-                  "x": 87.5,
-                  "y": 79.6,
-                  "label": "修訂 v1"
+                  "label": "標題：這裡會顯示你填的文字"
                 }
               ],
               "role": "kicad10"
             }
           ],
-          "quiz": {
-            "question": "圖框右下角的「Rev」（修訂）目前是什麼？",
-            "options": [
-              "v1",
-              "1/1",
-              "A4"
-            ],
-            "answer": 0,
-            "explain": "Rev 欄顯示 v1；1/1 是頁碼，A4 是紙張大小。"
-          },
           "pitfalls": [
-            "找到 template.kicad_wks 就直接覆蓋目前圖框。"
-          ],
-          "kind": "read"
+            "按了「取消」所以沒保存；填完要按「確定」並存檔。"
+          ]
         },
         {
           "id": "04-05",
@@ -2785,11 +3102,11 @@
           "help": "比較的是 04-02 保存的修改前圖；先確認移過文字而未改接線，再存修改後圖，兩張使用相近縮放方便對照。",
           "checks": [
             {
-              "type": "saved_since_start"
+              "type": "netlist_matches",
+              "spec": "diya"
             },
             {
-              "type": "erc",
-              "required": false
+              "type": "saved_since_start"
             }
           ],
           "guide": [
@@ -2806,8 +3123,8 @@
             },
             {
               "where": "原理圖編輯器左上工具列",
-              "do": "按儲存（磁片圖示）或 Ctrl+S；再用截圖工具存下整理後畫面。",
-              "see": "標題列沒有未儲存標記，學習頁的檢查會讀到檔案已更新。",
+              "do": "按儲存（磁片圖示）或 Ctrl+S，再用截圖工具存下整理後畫面；回學習頁按「先檢查一次」。",
+              "see": "自動檢查顯示 7 條連線符合規格表。",
               "mark": 2
             }
           ],
@@ -2849,7 +3166,8 @@
             "answer": 0,
             "explain": "整理文字位置不應改變電氣連接。線端仍接在腳位上，網路就沒有被破壞；ERC（下一課）會再做完整檢查。"
           },
-          "kind": "build"
+          "kind": "build",
+          "why": "比較整理前後，確認畫面更清楚而電路完全沒變。"
         }
       ],
       "sections": [
@@ -2865,7 +3183,7 @@
         {
           "id": "04-s2",
           "title": "整理元件與圖框",
-          "point": "只移動位置與文字，不改接線；再檢查圖框資訊。",
+          "point": "只移動位置與文字，不改接線；再填好圖框資訊。",
           "steps": [
             "04-03",
             "04-04",
@@ -2874,20 +3192,27 @@
         }
       ],
       "challenge": {
-        "title": "替圖框填上自己的資訊",
-        "goal": "在練習副本的頁面設定填入標題、日期與版本。",
+        "title": "用網路標籤取代一條長線",
+        "goal": "找一條繞得很遠的線，改用兩個同名網路標籤連接，連線不能變。",
         "tasks": [
-          "開啟頁面設定。",
-          "填入標題、日期、版本，按確定並存檔。"
+          "選一條很長或繞路的線，記下它連接的兩個腳位。",
+          "刪掉這條線，在兩端各畫一小段線並放同名網路標籤。",
+          "存檔後執行檢查。"
         ],
         "success": [
-          "圖框右下角顯示你填的內容。"
+          "自動檢查仍顯示 9 個元件、7 條連線符合規格表。"
         ],
         "checks": [
           {
-            "type": "saved_since_start"
+            "type": "netlist_matches",
+            "spec": "diya"
           }
         ]
+      },
+      "practice": {
+        "project": "diya",
+        "startFrom": "learning/templates/diya-before-erc",
+        "startNote": "作者第 5 課原理圖移除電源旗標與無連接旗標後的版本，等同第 3 課畫完的狀態"
       }
     },
     {
@@ -2895,12 +3220,12 @@
       "title": "執行與處理 ERC",
       "folder": "5_Perform_ERC",
       "stage": "原理圖",
-      "goal": "能執行電氣規則檢查，定位訊息並依實際電路原因修正。",
-      "context": "本章包含 PWR_FLAG。它用來表明電源網路受到供電，不是通用消除錯誤的方法；以實際訊息與電路為準。",
+      "goal": "對你的 Diya 原理圖執行 ERC，看懂每一條錯誤的原因，用電源旗標與無連接旗標正確處理到 0 個錯誤。",
+      "context": "照第 3 課畫完的 Diya 通常有兩類錯誤：電源接腳沒有被驅動、腳位沒有接線。PWR_FLAG 表明這個網路確實有電源（來自電池）；無連接旗標表示這支腳刻意不接。兩者都只能用在你確認過的地方，不是消除錯誤的萬用方法。",
       "completionCriteria": [
-        "已執行 ERC，保存完整結果。",
-        "每個待處理錯誤已修正；保留的警告或豁免有理由。",
-        "能示範從一條 ERC 訊息定位到實際元件或網路。"
+        "已執行 ERC 並看懂每一條錯誤的原因。",
+        "加上 PWR_FLAG 與無連接旗標後，ERC 錯誤為 0。",
+        "自動檢查確認連線仍符合規格表，結果已保存。"
       ],
       "files": [
         {
@@ -2929,33 +3254,29 @@
       "steps": [
         {
           "id": "05-01",
-          "title": "開啟本課練習副本",
-          "action": "使用本課的「開啟練習專案」功能；在 KiCad 管理員開啟原理圖編輯器。",
-          "success": "已看到本課原理圖編輯器，專案路徑指向練習副本。",
-          "help": "先核對目前專案位於 learning/workspaces/05/，再開 Schematics.kicad_sch；同名編輯器不代表同一份檔案。若已開其他章，先儲存並關閉那個專案，避免在錯誤副本繼續。",
+          "kind": "setup",
+          "title": "開啟你的 Diya 專案",
+          "action": "按「開啟練習專案」打開你的 Diya 專案，再在 KiCad 管理員雙擊 Schematics.kicad_sch。",
+          "why": "本課檢查並修正你自己的原理圖。",
+          "success": "原理圖編輯器的標題是 Schematics，畫面是你自己的 Diya 原理圖。",
+          "help": "如果 KiCad 開到作者的教材資料夾，先關閉那個專案，回學習頁重按「開啟練習專案」。還沒有自己的專案時，頁面會讓你選擇回第 3 課從頭做，或改用作者起點。",
           "guide": [
             {
-              "where": "學習頁面（本頁）",
-              "do": "按頁首的「開啟練習專案」。如果 KiCad 已開著別的專案（例如第 1 課），先在那個 KiCad 視窗選「檔案 → 關閉專案」再按。",
-              "see": "跳出 KiCad 專案管理員，視窗標題是本課專案名稱加「KiCad 10.0」。"
+              "where": "學習頁面（本頁頁首）",
+              "do": "按「開啟練習專案」。接著你第 4 課的 Diya 專案。",
+              "see": "學習頁頁首寫出本課從哪裡接續。"
             },
             {
               "where": "KiCad 專案管理員",
-              "do": "雙擊左側已存在的 Schematics.kicad_sch，不需要「新建」檔案；也可用右側「原理圖編輯器」。",
-              "see": "開出一個新視窗，標題結尾是「原理圖編輯器」。",
+              "do": "點「原理圖編輯器」，或雙擊左側的 Schematics.kicad_sch。",
+              "see": "開出原理圖編輯器。",
               "mark": 1
             },
             {
               "where": "原理圖編輯器",
-              "do": "如果出現舊版格式的黃色提示，先讀內容再儲存；已存成新格式時可能不再出現，無須為了對照截圖重新製造提示。",
-              "see": "顯示本課內容；有無黃色提示都不代替路徑與檔名核對。",
+              "do": "看畫面是不是你上一課做完的原理圖；上方若有黃色提示列，只是檔案格式說明。",
+              "see": "看到你自己的 Diya 原理圖。",
               "mark": 2
-            }
-          ],
-          "checks": [
-            {
-              "type": "project_open",
-              "editor": "sch"
             }
           ],
           "figures": [
@@ -2986,16 +3307,20 @@
               "role": "kicad10"
             }
           ],
-          "pitfalls": [
-            "開到原教材資料夾而不是 learning/workspaces/ 的練習副本；先看視窗標題列的路徑。"
+          "checks": [
+            {
+              "type": "project_open"
+            }
           ],
-          "kind": "setup"
+          "pitfalls": [
+            "開到作者的教材資料夾（例如 3_Schematics）而不是 learning/workspaces/diya；先看 KiCad 管理員的路徑。"
+          ]
         },
         {
           "id": "05-02",
-          "title": "執行第一次 ERC",
-          "action": "開啟電氣規則檢查；執行檢查；保留錯誤、警告及忽略測試資訊的完整截圖。",
-          "success": "能讀出實際錯誤數與警告數。",
+          "title": "執行 ERC 並讀出數字",
+          "action": "從「檢查 → 電氣規則檢查 (ERC)」執行檢查，讀出錯誤與警告的數字，截圖保存。",
+          "success": "能讀出你自己的錯誤數與警告數；照第 3 課畫完通常是 6 個錯誤。",
           "help": "先執行再讀數字，訊息不見先勾「所有」；參考截圖的 0／3 只適用當時教材，自己的結果不同就讀實際訊息。",
           "guide": [
             {
@@ -3018,8 +3343,8 @@
             },
             {
               "where": "對話框下方「顯示」列",
-              "do": "讀「錯誤」旁的綠色數字。",
-              "see": "參考截圖：本教材：錯誤 0。 實際數量以你本次執行為準，結果不同先讀訊息，不照抄數字。",
+              "do": "讀「錯誤」旁的數字。照第 3 課畫完的 Diya 通常是 6 個。",
+              "see": "錯誤數字出現。",
               "mark": 4
             },
             {
@@ -3062,7 +3387,7 @@
             },
             {
               "image": "learning/assets/lesson-05/kicad10-erc-dialog.png",
-              "caption": "ERC 對話框：右下「執行 ERC」，下方是數字。",
+              "caption": "ERC 對話框：右下「執行 ERC」，下方是數字（圖為作者完成版的 0／3，你的會不同）。",
               "marks": [
                 {
                   "n": 3,
@@ -3074,13 +3399,13 @@
                   "n": 4,
                   "x": 30.4,
                   "y": 82.5,
-                  "label": "錯誤：0"
+                  "label": "錯誤數字"
                 },
                 {
                   "n": 5,
                   "x": 46.3,
                   "y": 82.5,
-                  "label": "警告：3"
+                  "label": "警告數字"
                 },
                 {
                   "n": 6,
@@ -3093,50 +3418,56 @@
             }
           ],
           "quiz": {
-            "question": "本教材第一次 ERC，錯誤與警告各有幾個？",
+            "question": "照第 3 課畫完的 Diya 第一次執行 ERC，通常有幾個錯誤？",
             "options": [
-              "錯誤 0、警告 3",
-              "錯誤 3、警告 0",
-              "錯誤 0、警告 0"
+              "6 個",
+              "0 個",
+              "1 個"
             ],
             "answer": 0,
-            "explain": "數字在對話框下方：錯誤旁是 0，警告旁是 3。"
+            "explain": "2 個是電源接腳沒有被驅動，4 個是腳位沒有接線；如果你的數字不同，就讀實際訊息。"
           },
           "pitfalls": [
             "沒有重新執行就讀舊結果。",
             "把參考截圖的數字當成自己的結果。"
           ],
-          "kind": "read"
+          "kind": "read",
+          "why": "ERC 會找出「看起來畫好了，電氣上卻可能有問題」的地方。先讀懂原因再改，不要為了讓數字變 0 亂改。"
         },
         {
           "id": "05-03",
-          "title": "定位第一條訊息",
-          "action": "若有訊息，選取第一條並跳到圖上的位置；讀出元件參考、腳位或網路名稱。若無訊息，檢視電源與連線作為核對範例。",
-          "success": "能把檢查訊息對應到圖上物件；或已記錄無違規結果。",
-          "help": "第一條訊息可能不是 SW1；雙擊你自己清單的元件子項，記下規則、參考與腳位，找不到時截取完整訊息而非只報總數。",
+          "title": "定位並讀懂兩類錯誤",
+          "action": "雙擊錯誤訊息跳到圖上，分辨「電源接腳沒有被驅動」與「腳位沒有接線」兩類錯誤。",
+          "success": "能說出哪些腳位是電源沒被驅動、哪些腳位是沒接線，以及原因。",
+          "help": "訊息太多時先看標題相同的幾條；雙擊訊息底下的元件子項才會跳到圖上。",
           "guide": [
             {
               "where": "ERC 對話框清單",
-              "do": "先找你清單實際存在的一條訊息並展開元件子項，再雙擊定位；圖中以 SW1 的庫複本不符作示範。",
-              "see": "原理圖編輯器自動跳到 SW1 的位置。",
+              "do": "展開一條訊息，雙擊底下的元件子項。",
+              "see": "編輯器跳到那個元件，旁邊有標記。",
               "mark": 1
             },
             {
-              "where": "原理圖編輯器電池區",
-              "do": "看被標記的元件：SW1 變成粉紅色，旁邊有黃色小箭頭指向有問題的位置。",
-              "see": "SW1（SW_SPDT）被高亮。",
+              "where": "原理圖編輯器",
+              "do": "看被標記的位置在哪個元件、哪一支腳。",
+              "see": "能說出元件編號與腳號。",
               "mark": 2
             },
             {
-              "where": "ERC 對話框清單",
-              "do": "讀第一條訊息的文字：符號「SW_SPDT」與元件庫「Switch」中的複本不符。",
-              "see": "這是符號與元件庫版本的差異，不是接線錯誤。"
+              "where": "ERC 清單：電源類",
+              "do": "電源接腳沒有被驅動：ATtiny85 的 VCC 與 GND 是電源輸入腳，但網路上只有電池（被動腳），KiCad 看不出這裡有電源。",
+              "see": "2 條電源類錯誤。"
+            },
+            {
+              "where": "ERC 清單：未接線類",
+              "do": "腳位沒有接線：ATtiny85 第 1、3、5 腳與開關 A 腳本來就不用接，但 KiCad 不知道是刻意的。",
+              "see": "4 條未接線錯誤。"
             }
           ],
           "figures": [
             {
               "image": "learning/assets/lesson-05/kicad10-erc-dialog.png",
-              "caption": "第一條訊息下方的元件名稱可以雙擊。",
+              "caption": "第一條訊息下方的元件名稱可以雙擊（圖為作者教材的示範訊息）。",
               "marks": [
                 {
                   "n": 1,
@@ -3162,120 +3493,215 @@
             }
           ],
           "quiz": {
-            "question": "第一條 ERC 訊息指向哪個元件？",
+            "question": "為什麼 U1 的 VCC 會被說「沒有被驅動」？",
             "options": [
-              "SW1（SW_SPDT）",
-              "BT1（Battery_Cell）",
-              "D1（LED）"
+              "電池的腳是被動腳，KiCad 看不出這裡有電源",
+              "VCC 沒有接任何線",
+              "ATtiny85 壞了"
             ],
             "answer": 0,
-            "explain": "第一條訊息的子項寫的是「符號 SW1 [SW_SPDT]」。"
+            "explain": "VCC 有接到電池，但電池腳是被動類型；要用 PWR_FLAG 告訴 KiCad 這個網路有供電。"
           },
-          "kind": "read"
+          "kind": "read",
+          "why": "同樣是錯誤，原因和處理方法不同；先分清楚，下一步才不會改錯地方。",
+          "terms": [
+            {
+              "term": "電源輸入腳",
+              "meaning": "晶片上需要外部供電的腳，例如 ATtiny85 的 VCC 與 GND。"
+            },
+            {
+              "term": "被動腳",
+              "meaning": "電阻、電池這類元件的腳；KiCad 不會把它當成電源來源。"
+            }
+          ],
+          "pitfalls": [
+            "只看錯誤總數就開始改；先分清楚每一條的原因。"
+          ]
         },
         {
           "id": "05-04",
-          "title": "只修正已理解的原因",
-          "action": "核對該腳位或網路用途；在工作副本修正接線、腳位屬性或適當電源標記；再次執行 ERC。",
-          "success": "每條訊息已定位並理解原因；修正後重新檢查，保留項目有核對依據，未解問題另列。",
-          "help": "「庫複本不符」要確認型號、腳號與電氣類型未變才可記理由；如果出現未驅動電源或未接腳位，不能套用版本差異的理由。",
-          "checks": [
-            {
-              "type": "erc"
-            }
-          ],
+          "kind": "build",
+          "title": "加上電源旗標 PWR_FLAG",
+          "action": "用「放置電源符號」放兩個 PWR_FLAG，分別接到 +3.3V 與 GND 網路，再執行一次 ERC。",
+          "why": "PWR_FLAG 告訴 KiCad：這個網路有電源供應（來自電池）。它只是給檢查看的標記，不會變成電路板上的零件。",
+          "success": "+3.3V 與 GND 網路各有一個 PWR_FLAG；再跑 ERC，電源類錯誤消失，只剩未接線類。",
+          "help": "PWR_FLAG 在電源符號的清單裡，用「放置電源符號」找。它的端點要碰到網路上的線才算接上。",
           "guide": [
             {
-              "where": "ERC 對話框清單",
-              "do": "讀三條警告的標題，每條都寫「符號…與元件庫…中的複本不符」。",
-              "see": "SW_SPDT、Battery_Cell、LED 三個符號各一條。",
-              "mark": 1
+              "where": "原理圖編輯器選單「放置 (P)」",
+              "do": "選「放置電源符號」（快捷鍵 P），篩選欄輸入 PWR_FLAG，選 power 底下的 PWR_FLAG，放在電池上方的 +3.3V 線旁，按 Esc。",
+              "see": "出現一個 PWR_FLAG。",
+              "mark": 1,
+              "phase": "A 放旗標"
             },
             {
-              "where": "ERC 對話框清單",
-              "do": "判斷原因：教材用 KiCad 7 建立，KiCad 10 的元件庫符號版本不同，所以提示複本不符，不是接線或電源錯誤。",
-              "see": "三條都不涉及腳位或網路。",
-              "mark": 2
+              "where": "PWR_FLAG 與 +3.3V 線",
+              "do": "用 W 從 PWR_FLAG 的端點畫一小段線，接到 +3.3V 的線上。",
+              "see": "PWR_FLAG 接上 +3.3V 網路。",
+              "phase": "A 放旗標"
             },
             {
-              "where": "你的判斷",
-              "do": "逐條比對符號與來源庫的型號、腳號和電氣類型；確認差異可接受才記保留理由，不直接把所有庫差異都列為可忽略。",
-              "see": "能說出為什麼不處理。",
-              "mark": 3
+              "where": "GND 線附近",
+              "do": "再放一個 PWR_FLAG，用同樣方法接到 GND 的線上。",
+              "see": "GND 網路也有 PWR_FLAG。",
+              "phase": "A 放旗標"
+            },
+            {
+              "where": "ERC 對話框",
+              "do": "按 Ctrl+S，再按「執行 ERC」。",
+              "see": "電源類錯誤消失，剩 4 條未接線錯誤。",
+              "phase": "B 重新檢查"
+            },
+            {
+              "where": "學習頁本步「自動檢查練習檔」",
+              "do": "按「先檢查一次」。",
+              "see": "連線仍符合規格表（PWR_FLAG 不算元件）。",
+              "phase": "B 重新檢查"
             }
           ],
           "figures": [
             {
-              "image": "learning/assets/lesson-05/kicad10-erc-dialog.png",
-              "caption": "三條警告都是同一類。",
+              "image": "learning/assets/lesson-01/kicad10-place-menu.png",
+              "caption": "放置選單：「放置電源符號」快捷鍵 P。",
+              "role": "kicad10",
               "marks": [
                 {
                   "n": 1,
-                  "x": 56.5,
-                  "y": 21.3,
-                  "label": "SW_SPDT 複本不符"
-                },
+                  "x": 34.5,
+                  "y": 11.0,
+                  "label": "放置電源符號（P）"
+                }
+              ]
+            }
+          ],
+          "checks": [
+            {
+              "type": "netlist_matches",
+              "spec": "diya"
+            }
+          ],
+          "pitfalls": [
+            "把 PWR_FLAG 接到沒有電源的網路，只為了讓錯誤消失；它只能放在確實有供電的網路上。",
+            "PWR_FLAG 放了但沒接上線；端點要碰到網路上的線。"
+          ]
+        },
+        {
+          "id": "05-05",
+          "kind": "build",
+          "title": "標出刻意不接的腳位",
+          "action": "用「放置無連接旗標」標記 ATtiny85 第 1、3、5 腳與開關 A 腳，再執行 ERC 直到 0 個錯誤。",
+          "why": "這幾支腳本來就不用接。標上無連接旗標，等於告訴 KiCad 和看圖的人：這是刻意的，不是忘了接。",
+          "terms": [
+            {
+              "term": "無連接旗標",
+              "meaning": "畫在腳位末端的小叉號，表示這支腳刻意不接線。"
+            }
+          ],
+          "success": "四支不用的腳都有無連接旗標；ERC 錯誤為 0，自動檢查通過。",
+          "help": "旗標要點在腳位的末端。ERC 若仍有錯誤，雙擊訊息看是哪一支腳，再對照規格表確認它該不該接。",
+          "guide": [
+            {
+              "where": "原理圖編輯器選單「放置 (P)」",
+              "do": "選「放置無連接旗標」（快捷鍵 Q），依序點 U1 第 1 腳（RESET/PB5）、第 3 腳（XTAL2/PB4）、第 5 腳（AREF/PB0）的末端，按 Esc。",
+              "see": "三支腳末端出現小叉號。",
+              "mark": 1,
+              "phase": "A 標記腳位"
+            },
+            {
+              "where": "開關 SW1",
+              "do": "再按 Q，點開關 A 腳（1 號）的末端，按 Esc。",
+              "see": "開關 A 腳也有小叉號。",
+              "phase": "A 標記腳位"
+            },
+            {
+              "where": "ERC 對話框",
+              "do": "按 Ctrl+S，再按「執行 ERC」。",
+              "see": "錯誤是 0。",
+              "mark": 2,
+              "phase": "B 檢查到 0"
+            },
+            {
+              "where": "學習頁本步「自動檢查練習檔」",
+              "do": "按「先檢查一次」，或直接按「我做完了，記錄這一步」（會自動檢查）。",
+              "see": "ERC 與規格表比對都通過。",
+              "phase": "B 檢查到 0"
+            }
+          ],
+          "figures": [
+            {
+              "image": "learning/assets/lesson-01/kicad10-place-menu.png",
+              "caption": "放置選單：「放置無連接旗標」快捷鍵 Q。",
+              "role": "kicad10",
+              "marks": [
+                {
+                  "n": 1,
+                  "x": 36,
+                  "y": 23.6,
+                  "label": "放置無連接旗標（Q）"
+                }
+              ]
+            },
+            {
+              "image": "learning/assets/lesson-05/kicad10-erc-dialog.png",
+              "caption": "ERC 對話框下方的錯誤數字（圖為作者完成版）。",
+              "marks": [
                 {
                   "n": 2,
-                  "x": 58,
-                  "y": 30.8,
-                  "label": "Battery_Cell 複本不符"
-                },
-                {
-                  "n": 3,
-                  "x": 51,
-                  "y": 40.2,
-                  "label": "LED 複本不符"
+                  "x": 34.7,
+                  "y": 87.8,
+                  "label": "錯誤：0"
                 }
               ],
               "role": "kicad10"
             }
           ],
-          "quiz": {
-            "question": "參考截圖裡這三條警告的共同標題是什麼？",
-            "options": [
-              "符號與元件庫中的版本複本不一致",
-              "腳位沒有接線",
-              "電源沒有 PWR_FLAG"
-            ],
-            "answer": 0,
-            "explain": "圖中都寫複本不符；自己的清單若不同，要另外定位與核對，不能套用此原因。"
-          },
-          "pitfalls": [
-            "所有警告都歸成「版本差異」；未驅動電源或未接腳位不能這樣處理。"
+          "checks": [
+            {
+              "type": "erc"
+            },
+            {
+              "type": "netlist_matches",
+              "spec": "diya"
+            },
+            {
+              "type": "saved_since_start"
+            }
           ],
-          "kind": "build"
+          "pitfalls": [
+            "把無連接旗標放在應該接線的腳位上；先對照規格表，只標第 1、3、5 腳與開關 A 腳。",
+            "旗標沒有放在腳位末端，ERC 仍說沒接線；放大後點在腳的末端。"
+          ]
         },
         {
-          "id": "05-05",
+          "id": "05-06",
           "title": "保存本課檢查證據",
-          "action": "再次查看所有 ERC 結果；記錄未處理項目與必要豁免理由；儲存原理圖與結果截圖。",
-          "success": "完成紀錄包含檢查結果與每個保留項目的理由。",
+          "action": "再看一次完整 ERC 結果，寫下每個保留警告的理由，存報告與原理圖。",
+          "success": "ERC 錯誤為 0，每個保留的警告都有一句理由，報告與原理圖已保存。",
           "help": "報告要在本次執行後保存，筆記逐條列保留理由；忽略測試不是通過，未執行檢查也不能登記為零問題。",
           "guide": [
             {
               "where": "ERC 對話框下方",
-              "do": "再按一次「執行 ERC」，確認數字仍是 錯誤 0、警告 3。",
-              "see": "參考截圖：數字與先前相同。 實際數量以你本次執行為準，結果不同先讀訊息，不照抄數字。",
+              "do": "再按一次「執行 ERC」，確認錯誤是 0。",
+              "see": "錯誤 0。",
               "mark": 1
             },
             {
               "where": "ERC 對話框清單",
-              "do": "對每個保留項目寫一句理由：三條都是庫版本差異，不是電氣問題。可按「儲存...」存成報告。",
-              "see": "每個警告都有一句理由。",
+              "do": "如果有警告，逐條寫一句理由（例如作者起點會有元件庫版本差異的警告）；可按「儲存...」存成報告。",
+              "see": "每個保留項目都有理由。",
               "mark": 2
             },
             {
               "where": "原理圖編輯器",
-              "do": "回編輯器按 Ctrl+S（或上方工具列的儲存圖示）。",
-              "see": "標題列沒有未儲存標記。",
+              "do": "按 Ctrl+S（或上方工具列的儲存圖示）。",
+              "see": "原理圖已存檔。",
               "mark": 3
             }
           ],
           "figures": [
             {
               "image": "learning/assets/lesson-05/kicad10-erc-dialog.png",
-              "caption": "再次確認數字，並可用「儲存...」存報告。",
+              "caption": "ERC 對話框：確認數字，並可用「儲存...」存報告（圖為作者完成版）。",
               "marks": [
                 {
                   "n": 1,
@@ -3309,27 +3735,29 @@
           "pitfalls": [
             "把「忽略測試」或「沒執行」記成零問題。"
           ],
-          "kind": "read"
+          "kind": "read",
+          "why": "留下這次檢查的結果與理由，之後改版或請人幫忙時，才知道當時確認過什麼。"
         }
       ],
       "sections": [
         {
           "id": "05-s1",
-          "title": "開啟並執行 ERC",
-          "point": "第一次執行電氣規則檢查並保留完整結果。",
+          "title": "執行並讀懂 ERC",
+          "point": "第一次執行 ERC，分清楚兩類錯誤的原因。",
           "steps": [
             "05-01",
-            "05-02"
+            "05-02",
+            "05-03"
           ]
         },
         {
           "id": "05-s2",
-          "title": "定位、修正與留證",
-          "point": "一次處理一條訊息，只修已理解的原因。",
+          "title": "修正並留證",
+          "point": "用電源旗標與無連接旗標處理到 0 個錯誤，再保存結果。",
           "steps": [
-            "05-03",
             "05-04",
-            "05-05"
+            "05-05",
+            "05-06"
           ]
         }
       ],
@@ -3349,6 +3777,11 @@
             "type": "erc"
           }
         ]
+      },
+      "practice": {
+        "project": "diya",
+        "startFrom": "learning/templates/diya-before-erc",
+        "startNote": "作者第 5 課原理圖移除電源旗標與無連接旗標後的版本，等同第 3 課畫完的狀態"
       }
     },
     {
@@ -3356,12 +3789,12 @@
       "title": "指定與核對元件封裝",
       "folder": "6_Assign_Footprint",
       "stage": "原理圖",
-      "goal": "為要裝配的元件指定合適封裝，並核對腳位數、腳距與極性。",
-      "context": "本章為 Diya 原理圖，不直接沿用第 01 課三元件的所有封裝選擇。參考實體零件與規格再指派。",
+      "goal": "替你 Diya 原理圖的每個元件指定實體封裝，並核對腳距、腳位數與極性。",
+      "context": "符號代表電氣功能，封裝決定電路板上焊墊的位置與大小。ATtiny85 與光敏電阻的符號已帶預設封裝，其餘要自己指定。封裝名稱依 KiCad 10 元件庫；作者教材的開關封裝在 KiCad 10 已改名。",
       "completionCriteria": [
-        "所有要裝配的元件均有明確封裝；電源符號等非實體項目有清楚區分。",
-        "至少核對電阻、LED、MCU 與電池座的尺寸、腳位或極性。",
-        "封裝指派已保存於工作原理圖。"
+        "9 個元件都有封裝，名稱與規格表一致。",
+        "核對過電阻腳距、LED 極性、DIP-8 腳數與電池座尺寸。",
+        "自動檢查確認封裝都已指定、連線仍符合規格表，檔案已存檔。"
       ],
       "files": [
         {
@@ -3390,33 +3823,29 @@
       "steps": [
         {
           "id": "06-01",
-          "title": "開啟本課練習副本",
-          "action": "使用本課的「開啟練習專案」功能；在 KiCad 管理員開啟原理圖編輯器。",
-          "success": "已看到本課原理圖編輯器，專案路徑指向練習副本。",
-          "help": "先核對目前專案位於 learning/workspaces/06/，再開 Schematics.kicad_sch；同名編輯器不代表同一份檔案。若已開其他章，先儲存並關閉那個專案，避免在錯誤副本繼續。",
+          "kind": "setup",
+          "title": "開啟你的 Diya 專案",
+          "action": "按「開啟練習專案」打開你的 Diya 專案，再在 KiCad 管理員雙擊 Schematics.kicad_sch。",
+          "why": "本課替你自己原理圖上的元件指定封裝。",
+          "success": "原理圖編輯器的標題是 Schematics，畫面是你自己的 Diya 原理圖。",
+          "help": "如果 KiCad 開到作者的教材資料夾，先關閉那個專案，回學習頁重按「開啟練習專案」。還沒有自己的專案時，頁面會讓你選擇回第 3 課從頭做，或改用作者起點。",
           "guide": [
             {
-              "where": "學習頁面（本頁）",
-              "do": "按頁首的「開啟練習專案」。如果 KiCad 已開著別的專案（例如第 1 課），先在那個 KiCad 視窗選「檔案 → 關閉專案」再按。",
-              "see": "跳出 KiCad 專案管理員，視窗標題是本課專案名稱加「KiCad 10.0」。"
+              "where": "學習頁面（本頁頁首）",
+              "do": "按「開啟練習專案」。接著你第 5 課的 Diya 專案。",
+              "see": "學習頁頁首寫出本課從哪裡接續。"
             },
             {
               "where": "KiCad 專案管理員",
-              "do": "雙擊左側已存在的 Schematics.kicad_sch，不需要「新建」檔案；也可用右側「原理圖編輯器」。",
-              "see": "開出一個新視窗，標題結尾是「原理圖編輯器」。",
+              "do": "點「原理圖編輯器」，或雙擊左側的 Schematics.kicad_sch。",
+              "see": "開出原理圖編輯器。",
               "mark": 1
             },
             {
               "where": "原理圖編輯器",
-              "do": "如果出現舊版格式的黃色提示，先讀內容再儲存；已存成新格式時可能不再出現，無須為了對照截圖重新製造提示。",
-              "see": "顯示本課內容；有無黃色提示都不代替路徑與檔名核對。",
+              "do": "看畫面是不是你上一課做完的原理圖；上方若有黃色提示列，只是檔案格式說明。",
+              "see": "看到你自己的 Diya 原理圖。",
               "mark": 2
-            }
-          ],
-          "checks": [
-            {
-              "type": "project_open",
-              "editor": "sch"
             }
           ],
           "figures": [
@@ -3447,65 +3876,57 @@
               "role": "kicad10"
             }
           ],
-          "pitfalls": [
-            "開到原教材資料夾而不是 learning/workspaces/ 的練習副本；先看視窗標題列的路徑。"
+          "checks": [
+            {
+              "type": "project_open"
+            }
           ],
-          "kind": "setup"
+          "pitfalls": [
+            "開到作者的教材資料夾（例如 3_Schematics）而不是 learning/workspaces/diya；先看 KiCad 管理員的路徑。"
+          ]
         },
         {
           "id": "06-02",
-          "title": "找出目前的封裝欄位",
-          "action": "開啟一個電阻的屬性；查看封裝欄是否有值；開啟預覽或瀏覽封裝以辨認兩個焊墊。",
-          "success": "能看見完整封裝名稱及其焊墊排列。",
+          "title": "找到封裝欄並看懂現況",
+          "action": "看 U1 的封裝欄，再用「工具 → 分配封裝...」看 9 個符號中哪些還沒有封裝。",
+          "success": "能指出 U1 與光敏電阻已有封裝，其餘 7 個還沒有。",
           "help": "預覽找不到時先讀完整封裝名稱是否存在，並辨認中間是符號清單、右側是封裝清單；這步只觀察，不重新指派。",
           "guide": [
             {
               "where": "原理圖編輯器畫布",
-              "do": "單擊 R1（10k）電阻。",
-              "see": "電阻被選取，左側出現「屬性」面板。",
+              "do": "單擊 U1（ATtiny85）。",
+              "see": "U1 被選取。",
               "mark": 1
             },
             {
-              "where": "左側「屬性」面板最下方的欄位",
-              "do": "找「封裝」這一列（需要時往下捲）。",
-              "see": "封裝：Resistor_THT:R_Axial_… 開頭的字串（面板放不下，後面被截斷）。",
+              "where": "左側「屬性」面板",
+              "do": "找「封裝」這一列（需要時往下捲）：已有 Package_DIP:DIP-8_W7.62mm。",
+              "see": "U1 已有封裝。",
               "mark": 2
             },
             {
-              "where": "原理圖編輯器選單列",
-              "do": "點「工具 (T)」，選「分配封裝...」。",
-              "see": "開出「分配封裝」視窗。",
+              "where": "原理圖編輯器選單「工具 (T)」",
+              "do": "選「分配封裝...」。",
+              "see": "開出分配封裝視窗。",
               "mark": 3
             },
             {
               "where": "分配封裝視窗中間欄",
-              "do": "找 R1 這一列，右邊寫著完整封裝名稱。",
-              "see": "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P15.24mm_Horizontal。",
+              "do": "逐列看 9 個符號：U1 與 R2（光敏電阻）後面有封裝，其他的還空著。看完按「取消 (C)」。",
+              "see": "7 個符號還沒有封裝。",
               "mark": 4
-            },
-            {
-              "where": "分配封裝視窗",
-              "do": "選取 R1 那一列，按工具列的「檢視封裝」圖示（左起第三個），開出封裝預覽。",
-              "see": "預覽窗顯示兩個紅色圓形焊墊，編號 1 與 2。",
-              "mark": 5
-            },
-            {
-              "where": "對照圖：R1 的封裝預覽：兩個焊墊。",
-              "do": "對照標記找到「焊墊 2」，在自己的視窗讀出同一欄位或位置；圖中數值與選取狀態僅作參考，不要求先改成相同。",
-              "see": "能指認該位置；欄位不存在或版本不同時回報完整視窗畫面。",
-              "mark": 6
             }
           ],
           "figures": [
             {
               "image": "learning/assets/lesson-06/kicad10-schematic-units.png",
-              "caption": "單擊 R1。",
+              "caption": "單擊 U1（圖為作者原理圖）。",
               "marks": [
                 {
                   "n": 1,
-                  "x": 52.5,
-                  "y": 37.5,
-                  "label": "R1（10k）"
+                  "x": 31,
+                  "y": 60,
+                  "label": "U1（ATtiny85）：單擊本體"
                 }
               ],
               "role": "kicad10"
@@ -3538,7 +3959,7 @@
             },
             {
               "image": "learning/assets/lesson-06/kicad10-assign-footprints.png",
-              "caption": "分配封裝視窗：中間欄是每個符號的封裝。",
+              "caption": "分配封裝視窗：中間欄是每個符號的封裝（圖為作者完成版，所以每列都有封裝）。",
               "marks": [
                 {
                   "n": 4,
@@ -3548,173 +3969,128 @@
                 }
               ],
               "role": "kicad10"
-            },
-            {
-              "image": "learning/assets/lesson-06/kicad10-footprint-resistor.png",
-              "caption": "R1 的封裝預覽：兩個焊墊。",
-              "marks": [
-                {
-                  "n": 5,
-                  "x": 36.1,
-                  "y": 36.5,
-                  "label": "焊墊 1"
-                },
-                {
-                  "n": 6,
-                  "x": 66.9,
-                  "y": 36.5,
-                  "label": "焊墊 2"
-                }
-              ],
-              "role": "kicad10"
             }
           ],
           "quiz": {
-            "question": "R1 的封裝有幾個焊墊？",
+            "question": "剛畫完的 Diya，哪兩個元件已經有封裝？",
             "options": [
-              "2 個",
-              "3 個",
-              "8 個"
+              "U1 與 R2（光敏電阻）",
+              "R1 與 R3",
+              "D1 與 BT1"
             ],
             "answer": 0,
-            "explain": "封裝預覽中可見編號 1 與 2 兩個圓形焊墊。"
+            "explain": "KiCad 10 的 ATtiny85V-10P 與 LDR07 符號內建預設封裝，其他符號要自己指定。"
           },
-          "kind": "read"
+          "kind": "read",
+          "why": "先知道哪些元件已有封裝、哪些還空著，指定時才不會漏掉。"
         },
         {
           "id": "06-03",
-          "title": "核對電阻與 LED",
-          "action": "比較電阻腳距、LED 直徑與預計使用的實體元件；查看 LED 焊墊編號及符號腳位對應。",
-          "success": "能說明所選封裝符合尺寸，LED 的陽極與陰極對應正確。",
-          "help": "第 1 課的電阻腳距 7.62 mm 與本章 15.24 mm 不同，不能互抄；實物 LED 的短腳或扁邊仍要以元件資料核對陰極。",
+          "kind": "build",
+          "title": "指定電阻與 LED 的封裝",
+          "action": "用符號屬性（E）在 R1、R3、R4 的「封裝」欄貼上電阻封裝，D1 貼上 LED 封裝，存檔。",
+          "why": "電阻與 LED 是插件元件，封裝決定兩個焊墊的距離（腳距）與孔的大小，要和實際零件相符才裝得上。",
+          "terms": [
+            {
+              "term": "腳距",
+              "meaning": "兩個焊墊中心的距離；P15.24mm 表示 15.24 mm。"
+            }
+          ],
+          "success": "R1、R3、R4 的封裝是 R_Axial_DIN0207…P15.24mm，D1 是 LED_D5.0mm，已存檔。",
+          "help": "名稱要完整、不能多空白；貼錯時下一步的檢查會指出是哪個元件。",
           "guide": [
             {
-              "where": "分配封裝視窗中間欄",
-              "do": "看一般電阻 R1、R3、R4 的封裝名稱 R_Axial_DIN0207…P15.24mm，P15.24mm 是腳距；R2 是 LDR，下一步另看。",
-              "see": "一般電阻使用 15.24 mm 腳距；R2 不套用這個封裝。",
+              "where": "原理圖編輯器的 R1",
+              "do": "游標放在 R1 上按 E，點「封裝」列的數值格，貼上 Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P15.24mm_Horizontal，按「確定」。",
+              "see": "R1 有封裝了。",
               "mark": 1
             },
             {
-              "where": "分配封裝視窗中間欄",
-              "do": "看 D1 這一列：LED_THT:LED_D5.0mm，D5.0mm 表示 5 mm 直徑的 LED。",
-              "see": "封裝名稱與 5mm Yellow LED 的外徑一致。",
+              "where": "R3 與 R4",
+              "do": "用同樣方法替 R3（5.6k）與 R4（470）貼上同一個電阻封裝。",
+              "see": "三顆一般電阻都有封裝。"
+            },
+            {
+              "where": "D1（LED）",
+              "do": "按 E，在「封裝」列貼上 LED_THT:LED_D5.0mm，按「確定」。",
+              "see": "D1 有封裝了。"
+            },
+            {
+              "where": "確定按鈕與存檔",
+              "do": "每個元件都按「確定 (O)」關閉；全部完成後按 Ctrl+S。",
+              "see": "已存檔。",
               "mark": 2
-            },
-            {
-              "where": "分配封裝視窗",
-              "do": "選 D1，按「檢視封裝」圖示，看 LED 的焊墊：方形焊墊旁標 K，圓形焊墊旁標 A。",
-              "see": "焊墊 1 是方形（K，陰極），焊墊 2 是圓形（A，陽極）。",
-              "mark": 3
-            },
-            {
-              "where": "原理圖的 LED 符號",
-              "do": "對照原理圖符號：LED 符號的腳 1 是 K、腳 2 是 A，與封裝焊墊編號一致。",
-              "see": "符號腳與焊墊的 1、2 對應相同。"
-            },
-            {
-              "where": "對照圖：D1 的封裝預覽：LED_D5.0mm。",
-              "do": "對照標記找到「焊墊 2（圓形，A 陽極）」，在自己的視窗讀出同一欄位或位置；圖中數值與選取狀態僅作參考，不要求先改成相同。",
-              "see": "能指認該位置；欄位不存在或版本不同時回報完整視窗畫面。",
-              "mark": 4
             }
           ],
           "figures": [
             {
-              "image": "learning/assets/lesson-06/kicad10-assign-footprints.png",
-              "caption": "R1～R4 與 D1 的封裝名稱。",
+              "image": "learning/assets/lesson-01/kicad10-resistor-properties.png",
+              "caption": "符號屬性（圖為第 1 課的電阻）：在「封裝」列的數值格貼上名稱。",
               "marks": [
                 {
                   "n": 1,
-                  "x": 20.3,
-                  "y": 21.1,
-                  "label": "R1"
+                  "x": 26,
+                  "y": 31,
+                  "label": "封裝列：貼上完整名稱"
                 },
                 {
                   "n": 2,
-                  "x": 20.3,
-                  "y": 17,
-                  "label": "D1"
-                }
-              ],
-              "role": "kicad10"
-            },
-            {
-              "image": "learning/assets/lesson-06/kicad10-footprint-led.png",
-              "caption": "D1 的封裝預覽：LED_D5.0mm。",
-              "marks": [
-                {
-                  "n": 3,
-                  "x": 40.6,
-                  "y": 66.4,
-                  "label": "焊墊 1（方形，K 陰極）"
-                },
-                {
-                  "n": 4,
-                  "x": 60,
-                  "y": 63.6,
-                  "label": "焊墊 2（圓形，A 陽極）"
+                  "x": 78,
+                  "y": 96,
+                  "label": "確定 (O)"
                 }
               ],
               "role": "kicad10"
             }
           ],
-          "quiz": {
-            "question": "LED_D5.0mm 封裝裡，方形的焊墊 1 是 LED 的哪一端？",
-            "options": [
-              "陰極（K）",
-              "陽極（A）",
-              "電源正極"
-            ],
-            "answer": 0,
-            "explain": "封裝預覽中焊墊 1 標示 K，焊墊 2 標示 A；原理圖 LED 符號的腳 1 也是 K。"
-          },
           "pitfalls": [
-            "照抄第 1 課的電阻腳距；本課是 15.24 mm，不是 7.62 mm。"
-          ],
-          "kind": "read"
+            "照抄第 1 課的 P7.62mm；本課規格是 P15.24mm。",
+            "貼到「數值」欄而不是「封裝」欄。",
+            "R2 是光敏電阻，已有自己的封裝，不要換成一般電阻封裝。"
+          ]
         },
         {
           "id": "06-04",
-          "title": "核對 MCU 與電池等其他元件",
-          "action": "逐類查看 ATtiny85、電池座、開關、感測元件與接頭的封裝；確認腳位數及腳位編號對應。",
-          "success": "要裝配的每一類元件都有可解釋的封裝選擇。",
-          "help": "R2 是光敏電阻，別被參考字母 R 誤導成一般電阻；電池座名稱含 2450，與第 1 課 CR2032 不同，先核對實際型號。",
+          "title": "指定電池座、開關與麥克風排針",
+          "action": "替 BT1、SW1、MK1 貼上封裝，並確認 U1 與 R2 的預設封裝正確，存檔。",
+          "success": "BT1、SW1、MK1 都有規格表的封裝；U1 是 DIP-8、R2 是光敏電阻封裝；已存檔。",
+          "help": "開關請用規格表上的 KiCad 10 名稱；作者用的 SW_CuK_OS102011MA1QN1_SPDT_Angled 在 KiCad 10 改名為 SW_Slide_SPDT_Angled_CK_OS102011MA1Q，說明與 3 個焊墊相同。",
           "guide": [
             {
-              "where": "分配封裝視窗中間欄",
-              "do": "看 U1（ATtiny85V-10P）：Package_DIP:DIP-8_W7.62mm。DIP-8 表示 8 支腳、雙排直插，與 ATtiny85 的 8 腳一致。",
-              "see": "U1 的封裝是 DIP-8。",
-              "mark": 1
-            },
-            {
-              "where": "分配封裝視窗中間欄",
-              "do": "看 BT1：Battery:BatteryHolder_ComfortableElectronic_CH273-2450_1x2450，是鈕扣電池座。",
-              "see": "BT1 使用電池座封裝。",
+              "where": "BT1（電池）",
+              "do": "按 E，在「封裝」列貼上 Battery:BatteryHolder_ComfortableElectronic_CH273-2450_1x2450。",
+              "see": "BT1 是 2450 鈕扣電池座。",
               "mark": 2
             },
             {
-              "where": "分配封裝視窗中間欄",
-              "do": "看 SW1：Button_Switch_THT:SW_CuK_OS102011MA1QN1_SPDT_Angled，是三腳的滑動開關。",
-              "see": "SW1 的封裝是 SPDT 開關。",
+              "where": "SW1（開關）",
+              "do": "按 E，在「封裝」列貼上 Button_Switch_THT:SW_Slide_SPDT_Angled_CK_OS102011MA1Q。",
+              "see": "SW1 是三腳滑動開關。",
               "mark": 3
             },
             {
-              "where": "分配封裝視窗中間欄",
-              "do": "看 MK1：Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical，麥克風以兩針排針接出。",
-              "see": "MK1 使用 2 針排針封裝。",
+              "where": "MK1（麥克風）",
+              "do": "按 E，在「封裝」列貼上 Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical。",
+              "see": "麥克風以兩針排針接出。",
               "mark": 4
             },
             {
-              "where": "分配封裝視窗中間欄",
-              "do": "看 R2：OptoDevice:R_LDR_5.1x4.3mm_P3.4mm_Vertical，是光敏電阻專用封裝。",
-              "see": "R2 的封裝與其他電阻不同。",
+              "where": "U1 與 R2",
+              "do": "確認 U1 是 Package_DIP:DIP-8_W7.62mm（8 支腳雙排直插）、R2 是 OptoDevice:R_LDR_5.1x4.3mm_P3.4mm_Vertical，不用改。",
+              "see": "兩個預設封裝都正確。",
+              "mark": 1
+            },
+            {
+              "where": "R2 與存檔",
+              "do": "R2 雖然參考是 R，但它是光敏電阻，封裝和一般電阻不同；確認後按 Ctrl+S。",
+              "see": "已存檔。",
               "mark": 5
             }
           ],
           "figures": [
             {
               "image": "learning/assets/lesson-06/kicad10-assign-footprints.png",
-              "caption": "其他元件的封裝。",
+              "caption": "作者完成時的封裝清單（開關是舊名稱，你要填 KiCad 10 的新名稱）。",
               "marks": [
                 {
                   "n": 1,
@@ -3764,21 +4140,30 @@
             "把光敏電阻 R2 當成一般電阻。",
             "電池座名稱含 2450，和第 1 課的 CR2032 不同。"
           ],
-          "kind": "read"
+          "kind": "build",
+          "why": "這三個元件的封裝要對上實際零件：2450 鈕扣電池座、C&K 滑動開關、兩針排針（麥克風用線接出）。",
+          "checks": []
         },
         {
           "id": "06-05",
-          "title": "檢查清單並儲存",
-          "action": "打開封裝指派清單或符號欄位表，檢查應裝配元件的空白欄；補齊後儲存。",
-          "success": "應裝配元件的封裝欄沒有未解決空白，工作原理圖已保存。",
+          "title": "用分配封裝核對並存檔",
+          "action": "用「工具 → 分配封裝...」核對 9 個符號都有封裝，存檔後自動檢查封裝與連線。",
+          "success": "9 個符號都有規格表的封裝；自動檢查通過，原理圖已保存。",
           "help": "R1～R4 包含光敏電阻 R2，清單不是四顆相同阻值；任何封裝仍空白或缺庫時先停止，記下元件參考與完整名稱。",
           "checks": [
             {
               "type": "footprints"
             },
             {
-              "type": "erc",
-              "required": false
+              "type": "footprints_match",
+              "spec": "diya"
+            },
+            {
+              "type": "netlist_matches",
+              "spec": "diya"
+            },
+            {
+              "type": "saved_since_start"
             }
           ],
           "guide": [
@@ -3809,7 +4194,7 @@
           "figures": [
             {
               "image": "learning/assets/lesson-06/kicad10-assign-footprints.png",
-              "caption": "九個符號、三個按鈕。",
+              "caption": "分配封裝視窗：九個符號、三個按鈕（圖為作者完成版）。",
               "marks": [
                 {
                   "n": 1,
@@ -3843,14 +4228,15 @@
             "answer": 0,
             "explain": "BT1、D1、MK1、R1～R4、SW1、U1 共 9 個，每一列都有封裝名稱。"
           },
-          "kind": "build"
+          "kind": "build",
+          "why": "最後用清單一次看完，避免漏掉某一顆；自動檢查會逐一比對規格表的封裝名稱。"
         }
       ],
       "sections": [
         {
           "id": "06-s1",
-          "title": "開啟並找到封裝欄",
-          "point": "認出符號屬性裡的封裝欄與封裝預覽。",
+          "title": "開啟並看懂封裝現況",
+          "point": "找到封裝欄，看出哪些元件還沒有封裝。",
           "steps": [
             "06-01",
             "06-02"
@@ -3858,8 +4244,8 @@
         },
         {
           "id": "06-s2",
-          "title": "逐類核對並補齊",
-          "point": "依元件種類核對腳距、腳號與實際型號。",
+          "title": "指定並核對封裝",
+          "point": "依規格表貼上封裝，再用清單與自動檢查核對。",
           "steps": [
             "06-03",
             "06-04",
@@ -3877,6 +4263,11 @@
         "success": [
           "能說出兩者的差別與各自適用的實物。"
         ]
+      },
+      "practice": {
+        "project": "diya",
+        "startFrom": "5_Perform_ERC",
+        "startNote": "作者第 5 課完成的原理圖（ERC 已處理，只有 ATtiny85 與光敏電阻帶有封裝）"
       }
     },
     {

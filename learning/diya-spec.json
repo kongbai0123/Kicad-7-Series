@@ -5,7 +5,7 @@
   "source": {
     "folder": "6_Assign_Footprint",
     "file": "Schematics.kicad_sch",
-    "note": "由作者第 6 課原理圖以 kicad-cli 匯出 netlist 產生；元件用途為人工整理。"
+    "note": "由作者第 6 課原理圖以 kicad-cli 匯出 netlist 產生；元件用途為人工整理，封裝為 KiCad 10 名稱。"
   },
   "parts": [
     {
@@ -26,12 +26,13 @@
       "role": "接通或切斷電池負極與 GND；中間腳 B 是共用腳。",
       "lib": "Switch:SW_SPDT",
       "value": "SW_SPDT",
-      "footprint": "Button_Switch_THT:SW_CuK_OS102011MA1QN1_SPDT_Angled",
+      "footprint": "Button_Switch_THT:SW_Slide_SPDT_Angled_CK_OS102011MA1Q",
       "pins": {
         "1": "A",
         "2": "B",
         "3": "C"
       },
+      "authorFootprint": "Button_Switch_THT:SW_CuK_OS102011MA1QN1_SPDT_Angled",
       "swap": [
         [
           "1",
@@ -264,7 +265,7 @@
     },
     {
       "part": "U1",
-      "pin": "1"
+      "pin": "5"
     },
     {
       "part": "U1",
@@ -272,7 +273,7 @@
     },
     {
       "part": "U1",
-      "pin": "5"
+      "pin": "1"
     }
   ]
 }

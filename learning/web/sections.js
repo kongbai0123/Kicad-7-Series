@@ -70,7 +70,9 @@
     return chain.slice(chain.indexOf(lesson)).filter((item) => item === lesson || touched(item.id));
   };
   const lessonList = (items) => items.map((item) => `第 ${item.id} 課`).join('、');
-  const authorLesson = (folder) => lessons().find((item) => item.folder === folder)?.id || folder;
+  // A rescue start is either an author's lesson folder or a curated copy described by its practice.startNote.
+  const startLabel = (folder) => lessons().find((item) => item.practice?.startFrom === folder && item.practice?.startNote)?.practice.startNote
+    || (lessons().find((item) => item.folder === folder) ? `作者第 ${lessons().find((item) => item.folder === folder).id} 課完成時的檔案` : folder);
   const levelsOf = (lesson) => {
     const done = doneSet(lesson.id);
     const count = (kind) => {
@@ -85,7 +87,7 @@
   };
   const originText = (from) => !from ? '' : from === 'blank' ? '從空白專案開始'
     : from === 'own' ? '接續你上一課的成果'
-    : from.startsWith('rescue:') ? `從作者第 ${authorLesson(from.slice(7))} 課完成時的檔案接續（救援）` : from;
+    : from.startsWith('rescue:') ? `從${startLabel(from.slice(7))}接續（救援）` : from;
 
   class HttpError extends Error {
     constructor(message, status, data) { super(message); this.status = status; this.data = data; }
@@ -181,7 +183,7 @@
     const marks = figure.marks || [];
     return `<figure class="fig">${figure.role ? `<span class="fig-role ${escapeHtml(figure.role)}">${escapeHtml(ROLE_LABEL(figure.role))}</span>` : ''}<button type="button" class="shot" data-zoom="${index}" aria-label="放大查看：${escapeHtml(figure.caption)}"><img src="${fileUrl(figure.image)}" alt="${escapeHtml(figure.caption)}" loading="lazy">${marks.map((m) => `<span class="shot-mark" style="left:${clamp(m.x)}%;top:${clamp(m.y)}%" aria-hidden="true">${escapeHtml(m.n)}</span>`).join('')}</button><figcaption>${escapeHtml(figure.caption)} · 點圖可放大</figcaption>${marks.length ? `<ol class="legend">${marks.map((m) => `<li><span class="mark">${escapeHtml(m.n)}</span><span>${escapeHtml(m.label)}</span></li>`).join('')}</ol>` : ''}</figure>`;
   }
-  const CHECK_NAMES = { netlist_matches: '原理圖是否符合規格表', project_open: '是否開對練習副本', saved_since_start: '是否已儲存', erc: 'ERC', drc: 'DRC', footprints: '封裝是否都已指定', new_file: '是否產生新檔案', new_zip: '輸出 ZIP 內容' };
+  const CHECK_NAMES = { netlist_matches: '原理圖是否符合規格表', footprints_match: '封裝是否與規格表一致', project_open: '是否開對練習副本', saved_since_start: '是否已儲存', erc: 'ERC', drc: 'DRC', footprints: '封裝是否都已指定', new_file: '是否產生新檔案', new_zip: '輸出 ZIP 內容' };
   function renderCheck(key, checks, payload) {
     if (!(checks || []).length) return '';
     const result = state.checks.get(key);
@@ -189,7 +191,7 @@
       : item.ok === false ? `<span class="state ${item.required ? 'fail' : 'info'}">${item.required ? '未通過' : '參考'}</span>`
       : `<span class="state warn">${item.required ? '無法驗證' : '無法判斷'}</span>`;
     // KiCad rule violations show their rule code and count; spec comparison messages stand on their own.
-    const SPEC_FINDINGS = new Set(['part', 'missing', 'extra']);
+    const SPEC_FINDINGS = new Set(['part', 'missing', 'extra', 'footprint']);
     const findings = (item) => (item.findings || []).length ? `<ul class="findings">${item.findings.map((f) => SPEC_FINDINGS.has(f.type) ? `<li>${escapeHtml(f.description)}</li>` : `<li class="${f.ignorable ? 'is-ignorable' : ''}"><strong>${f.severity === 'error' ? '錯誤' : '警告'} ×${escapeHtml(f.count)}</strong> <code>${escapeHtml(f.type)}</code>${f.ignorable ? ' <span class="tag">可忽略</span>' : ''} ${escapeHtml(f.explain || f.description)}</li>`).join('')}</ul>` : '';
     const body = result
       ? `<ul class="check-list">${result.items.map((item) => `<li>${badge(item)}<div><strong>${escapeHtml(item.label)}${item.required ? '' : '（參考）'}</strong><span>${escapeHtml(item.detail)}</span>${findings(item)}</div></li>`).join('')}</ul>${(result.unverified || []).length ? '<p class="hint">有必要檢查無法執行；仍可記錄完成，但會標為「無法自動驗證」，不算工具通過。</p>' : ''}`
@@ -245,19 +247,19 @@
   function renderNeedsProject(lesson) {
     const first = chainOf(lesson)[0];
     const start = lesson.practice?.startFrom;
-    return `<div class="reset-box is-confirming" role="group" aria-label="還沒有練習專案"><p><strong>還沒有你自己的 ${escapeHtml(projectLabel(lesson))}</strong></p><p>第 ${first.id} 課會從空白開始建立它，之後各課都接著用同一個專案。${start ? `也可以直接用作者第 ${escapeHtml(authorLesson(start))} 課完成時的檔案當本課起點；之後這份專案會標示「從作者起點接續」。` : ''}</p><div class="row"><a class="btn btn-primary btn-small" href="#/${first.id}/${first.sections[0].id}">回第 ${first.id} 課從頭做</a>${start ? `<button type="button" class="btn btn-small" data-action="start-from-author" data-lesson="${lesson.id}">用作者起點開始本課</button>` : ''}<button type="button" class="btn btn-small btn-quiet" data-action="needs-cancel">取消</button></div></div>`;
+    return `<div class="reset-box is-confirming" role="group" aria-label="還沒有練習專案"><p><strong>還沒有你自己的 ${escapeHtml(projectLabel(lesson))}</strong></p><p>第 ${first.id} 課會從空白開始建立它，之後各課都接著用同一個專案。${start ? `也可以直接用${escapeHtml(startLabel(start))}當本課起點；之後這份專案會標示「從作者起點接續」。` : ''}</p><div class="row"><a class="btn btn-primary btn-small" href="#/${first.id}/${first.sections[0].id}">回第 ${first.id} 課從頭做</a>${start ? `<button type="button" class="btn btn-small" data-action="start-from-author" data-lesson="${lesson.id}">用作者起點開始本課</button>` : ''}<button type="button" class="btn btn-small btn-quiet" data-action="needs-cancel">取消</button></div></div>`;
   }
   function renderSpec(lesson) {
     const spec = state.data.specs?.[sharedOf(lesson)];
     if (!spec) return '';
-    return `<details class="more"><summary>${escapeHtml(spec.title)}（${spec.parts.length} 個元件）</summary><table class="spec-table"><thead><tr><th>參考</th><th>元件</th><th>數值</th><th>用途</th></tr></thead><tbody>${spec.parts.map((part) => `<tr><td>${escapeHtml(part.key)}</td><td>${escapeHtml(part.label)}<br><code>${escapeHtml(part.lib.split(':').pop())}</code></td><td>${escapeHtml(part.value)}</td><td>${escapeHtml(part.role)}</td></tr>`).join('')}</tbody></table><p class="muted">自動檢查依「元件種類＋數值」比對，參考編號不必和表中相同。</p></details>`;
+    return `<details class="more"><summary>${escapeHtml(spec.title)}（${spec.parts.length} 個元件）</summary><div class="spec-scroll"><table class="spec-table"><thead><tr><th>參考</th><th>元件</th><th>數值</th><th>用途</th><th>封裝（KiCad 10）</th></tr></thead><tbody>${spec.parts.map((part) => `<tr><td>${escapeHtml(part.key)}</td><td>${escapeHtml(part.label)}<br><code>${escapeHtml(part.lib.split(':').pop())}</code></td><td>${escapeHtml(part.value)}</td><td>${escapeHtml(part.role)}</td><td><code>${escapeHtml(part.footprint)}</code></td></tr>`).join('')}</tbody></table></div><p class="muted">自動檢查依「元件種類＋數值」比對，參考編號不必和表中相同。</p></details>`;
   }
   function renderRescue(lesson) {
     const start = lesson.practice?.startFrom;
     if (!start) return '';
     if (state.confirmRescue !== lesson.id) return `<div class="reset-box"><button type="button" class="btn btn-small btn-quiet" data-action="rescue-ask" data-lesson="${lesson.id}">改用作者起點（救援）</button></div>`;
     const affected = cascadeOf(lesson);
-    return `<div class="reset-box is-confirming" role="group"><p><strong>要改用作者第 ${escapeHtml(authorLesson(start))} 課完成時的檔案嗎？</strong></p><p>你目前的專案會先封存到 learning/archive/，不會刪除；${lessonList(affected)}會回到第 1 步，更早各課的確認紀錄保留。請先在 KiCad 用「檔案 → 關閉專案」關掉專案。</p><div class="row"><button type="button" class="btn btn-primary btn-small" data-action="rescue-confirm" data-lesson="${lesson.id}">確定改用作者起點</button><button type="button" class="btn btn-small" data-action="rescue-cancel">取消</button></div></div>`;
+    return `<div class="reset-box is-confirming" role="group"><p><strong>要改用作者起點嗎？</strong></p><p>起點是${escapeHtml(startLabel(start))}。</p><p>你目前的專案會先封存到 learning/archive/，不會刪除；${lessonList(affected)}會回到第 1 步，更早各課的確認紀錄保留。請先在 KiCad 用「檔案 → 關閉專案」關掉專案。</p><div class="row"><button type="button" class="btn btn-primary btn-small" data-action="rescue-confirm" data-lesson="${lesson.id}">確定改用作者起點</button><button type="button" class="btn btn-small" data-action="rescue-cancel">取消</button></div></div>`;
   }
   function renderWrapUp(lesson) {
     const progress = progressOf(lesson.id);
@@ -287,7 +289,7 @@
     const files = (lesson.files || []).map((file) => {
       const path = String(file.path || '');
       const name = escapeHtml(file.label || path.split('/').pop());
-      return /\.kicad_(pro|pcb|sch)$/i.test(path) ? `<li>${name}<span class="muted">（請用「開啟練習專案」）</span></li>` : `<li><a href="${fileUrl(path, /\.md$/i.test(path))}" target="_blank" rel="noopener"${/\.zip$/i.test(path) ? ' download' : ''}>${name}</a></li>`;
+      return /\.kicad_(pro|pcb|sch)$/i.test(path) ? `<li>${name}<span class="muted">${sharedOf(lesson) ? '（作者的檔案，只供對照；你的練習在 Diya 專案）' : '（請用「開啟練習專案」）'}</span></li>` : `<li><a href="${fileUrl(path, /\.md$/i.test(path))}" target="_blank" rel="noopener"${/\.zip$/i.test(path) ? ' download' : ''}>${name}</a></li>`;
     }).join('');
     const draft = state.drafts.get(lesson.id) || '';
     const project = sharedOf(lesson)

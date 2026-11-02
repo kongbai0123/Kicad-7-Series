@@ -30,7 +30,7 @@ EXPLAIN = {
     "lib_footprint_issues": ("找不到封裝所屬的元件庫或封裝已改名，多半是 KiCad 7 與 10 的庫差異，練習時可忽略。", True),
     "footprint_link_issues": ("符號指定的封裝在目前元件庫找不到，多半是 KiCad 7 與 10 的庫差異；若是自己新指定的封裝，請核對名稱。", True),
     "invalid_outline": ("板框不存在或沒有封閉；PCB 尚未畫外框的課程會出現，這是正常的。", False),
-    "pin_not_connected": ("有元件腳位沒有接線，也沒有放「不連接」標記。", False),
+    "pin_not_connected": ("有元件腳位沒有接線，也沒有放「無連接旗標」。", False),
     "power_pin_not_driven": ("電源腳沒有電源來源；通常要在電源網路放 PWR_FLAG。", False),
     "endpoint_off_grid": ("線端或腳位不在格點上，容易造成看似相接其實沒接。", False),
     "unconnected_items": ("有同一網路的焊墊還沒用銅連起來。", False),
@@ -51,6 +51,7 @@ LABELS = {
     "new_file": "已建立自己的新檔案",
     "new_zip": "本次輸出的 ZIP 內容完整",
     "netlist_matches": "原理圖的元件與連線符合規格表",
+    "footprints_match": "封裝與規格表一致",
 }
 
 
@@ -240,26 +241,21 @@ def _pin_text(item, pin):
     return f"{item['label']}（{POLARITY.get(name, name)}）" if name else f"{item['label']} 第 {pin} 腳"
 
 
-def compare_netlist(spec, parts, nets, scope=None):
-    """Match symbols to the spec by type (and resistance where a type repeats), then compare connections.
+def _finding(text, kind="part"):
+    return {"severity": "error", "type": kind, "description": text, "explain": text, "ignorable": False, "count": 1}
 
-    Reference numbers are ignored, so R1/R2 may be numbered in any order; the two ends of a resistor and
-    the interchangeable switch throws listed under "swap" may be wired either way round.
-    Returns (ok, detail, findings).
+
+def _map_parts(spec, parts, wanted, report_unknown=True):
+    """Match schematic symbols to spec parts by symbol type, and by resistance where a type repeats.
+
+    Returns ({ref: key} for wanted parts, findings) or (None, findings) while symbols are still unnumbered,
+    because unnumbered symbols share one reference and cannot be told apart.
     """
     index = {item["key"]: item for item in spec["parts"]}
-    wanted = set(scope or index)
-    findings = []
-
-    def problem(text, kind="part"):
-        findings.append({"severity": "error", "type": kind, "description": text, "explain": text,
-                         "ignorable": False, "count": 1})
-
     unnumbered = sorted({part["ref"] for part in parts if part["ref"].endswith("?")})
     if unnumbered:
-        # Unnumbered symbols share one reference, so their connections cannot be told apart yet.
-        problem(f"有元件還沒編號（{'、'.join(unnumbered)}）；請先用「工具 → 標註原理圖」編號，再檢查一次。")
-        return False, "元件還沒編號，暫時無法比對連線。", findings
+        return None, [_finding(f"有元件還沒編號（{'、'.join(unnumbered)}）；請先用「工具 → 批註原理圖…」編號，再檢查一次。")]
+    findings = []
     by_lib = {}
     for item in spec["parts"]:
         by_lib.setdefault(item["lib"], []).append(item)
@@ -270,22 +266,62 @@ def compare_netlist(spec, parts, nets, scope=None):
             value = ohms(part["value"])
             candidates = [item for item in candidates if item.get("ohms") == value]
             if not candidates:
-                problem(f"{part['ref']} 的數值「{part['value']}」不在規格表中；這類元件請填 "
-                        + "、".join(item["value"] for item in by_lib[part["lib"]]) + "。")
+                findings.append(_finding(f"{part['ref']} 的數值「{part['value']}」不在規格表中；這類元件請填 "
+                                         + "、".join(item["value"] for item in by_lib[part["lib"]]) + "。"))
                 continue
         if not candidates:
-            if scope is None:
-                problem(f"{part['ref']}（{part['lib']}）不在規格表中；確認是否放錯符號。")
+            if report_unknown:
+                findings.append(_finding(f"{part['ref']}（{part['lib']}）不在規格表中；確認是否放錯符號。"))
             continue
         key = candidates[0]["key"]
         if key in taken:
-            problem(f"{taken[key]} 和 {part['ref']} 都是規格表中的「{index[key]['label']}」，只需要一個。")
+            findings.append(_finding(f"{taken[key]} 和 {part['ref']} 都是規格表中的「{index[key]['label']}」，只需要一個。"))
             continue
         taken[key] = part["ref"]
         if key in wanted:
             mapping[part["ref"]] = key
     for key in [item["key"] for item in spec["parts"] if item["key"] in wanted and item["key"] not in taken]:
-        problem(f"還沒放「{index[key]['label']}」（符號 {index[key]['lib'].split(':')[-1]}）。")
+        findings.append(_finding(f"還沒放「{index[key]['label']}」（符號 {index[key]['lib'].split(':')[-1]}）。"))
+    return mapping, findings
+
+
+def compare_footprints(spec, parts):
+    """Each placed spec part should carry the spec's footprint (KiCad 10 name). Returns (ok, detail, findings)."""
+    index = {item["key"]: item for item in spec["parts"]}
+    by_ref = {part["ref"]: part for part in parts}
+    mapping, findings = _map_parts(spec, parts, set(index))
+    if mapping is None:
+        return False, "元件還沒編號，暫時無法比對封裝。", findings
+    matched = 0
+    for ref, key in sorted(mapping.items(), key=lambda item: list(index).index(item[1])):
+        have, want = by_ref[ref]["footprint"], index[key]["footprint"]
+        if not have:
+            findings.append(_finding(f"{ref}（{index[key]['label']}）還沒有封裝；規格表是 {want}。", "footprint"))
+        elif have != want:
+            note = "（作者教材的舊名稱，KiCad 10 已改名）" if have == index[key].get("authorFootprint") else ""
+            findings.append(_finding(f"{ref}（{index[key]['label']}）的封裝是 {have}{note}；規格表是 {want}。", "footprint"))
+        else:
+            matched += 1
+    ok = not findings
+    return ok, (f"{matched} 個元件的封裝都和規格表一致。" if ok else
+                f"{matched} / {len(index)} 個元件的封裝和規格表一致；其餘見下方說明。"), findings
+
+
+def compare_netlist(spec, parts, nets, scope=None):
+    """Match symbols to the spec by type (and resistance where a type repeats), then compare connections.
+
+    Reference numbers are ignored, so R1/R2 may be numbered in any order; the two ends of a resistor and
+    the interchangeable switch throws listed under "swap" may be wired either way round.
+    Returns (ok, detail, findings).
+    """
+    index = {item["key"]: item for item in spec["parts"]}
+    wanted = set(scope or index)
+    mapping, findings = _map_parts(spec, parts, wanted, report_unknown=scope is None)
+    if mapping is None:
+        return False, "元件還沒編號，暫時無法比對連線。", findings
+
+    def problem(text, kind):
+        findings.append(_finding(text, kind))
 
     placed = set(mapping.values())
 
@@ -371,6 +407,14 @@ def run_step(lesson, step, progress):
                     continue
                 ok, detail, findings = check_netlist(cli, _design(lesson, folder, "sch"),
                                                      load_spec(spec["spec"]), spec.get("parts"))
+                items.append(_item(kind, ok, detail, required, findings))
+            elif kind == "footprints_match":
+                cli = cli or find_cli()
+                if not cli:
+                    items.append(_item(kind, None, "找不到 kicad-cli，無法自動比對封裝；請對照規格表自行確認。", required))
+                    continue
+                parts, _pins, _nets = read_netlist(cli, _design(lesson, folder, "sch"))
+                ok, detail, findings = compare_footprints(load_spec(spec["spec"]), parts)
                 items.append(_item(kind, ok, detail, required, findings))
             elif kind in ("erc", "drc", "footprints"):
                 cli = cli or find_cli()

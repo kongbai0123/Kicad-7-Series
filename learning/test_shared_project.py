@@ -330,7 +330,7 @@ class NetlistCompareTests(unittest.TestCase):
         ok, detail, findings = checks.compare_netlist(SPEC, parts, GOOD_NETS)
         self.assertFalse(ok)
         self.assertEqual(len(findings), 1)
-        self.assertIn("標註原理圖", findings[0]["description"])
+        self.assertIn("批註原理圖", findings[0]["description"])
 
     def test_scope_checks_only_the_section_drawn_so_far(self):
         parts = [part("BT1", "Device:Battery_Cell", "3V"), part("R1", "Device:R", "10k")]
@@ -343,14 +343,29 @@ class NetlistCompareTests(unittest.TestCase):
         for text in ("R", "abc", "5.6k6", ""):
             self.assertIsNone(checks.ohms(text), text)
 
+    def test_footprints_are_compared_with_the_spec_and_old_names_are_explained(self):
+        spec = json.loads(json.dumps(SPEC))
+        for item in spec["parts"]:
+            item["footprint"] = f"Lib:{item['key']}"
+        spec["parts"][3]["authorFootprint"] = "Lib:OLD"
+        parts = [dict(p, footprint=f"Lib:{key}") for p, key in zip(GOOD_PARTS, ("BT1", "R4", "R1", "D1"))]
+        self.assertTrue(checks.compare_footprints(spec, parts)[0])
+        parts[0]["footprint"], parts[3]["footprint"] = "", "Lib:OLD"
+        ok, _detail, findings = checks.compare_footprints(spec, parts)
+        self.assertFalse(ok)
+        text = " ".join(f["description"] for f in findings)
+        self.assertIn("BT1（電池）還沒有封裝", text)
+        self.assertIn("作者教材的舊名稱", text)
+
 
 @unittest.skipUnless(checks.find_cli() and (REPO / "6_Assign_Footprint").is_dir(), "needs KiCad's kicad-cli")
 class AuthorStageNetlistTests(unittest.TestCase):
-    """The committed Diya spec agrees with the author's finished schematic and catches real stage differences."""
+    """The committed Diya data agrees with the author's files and with what the lessons claim."""
+
+    spec = json.loads((REPO / "learning/diya-spec.json").read_text(encoding="utf-8"))
 
     def check(self, folder):
-        spec = json.loads((REPO / "learning/diya-spec.json").read_text(encoding="utf-8"))
-        return checks.check_netlist(checks.find_cli(), REPO / folder / "Schematics.kicad_sch", spec)
+        return checks.check_netlist(checks.find_cli(), REPO / folder / "Schematics.kicad_sch", self.spec)
 
     def test_lesson_6_schematic_matches_the_spec(self):
         ok, detail, findings = self.check("6_Assign_Footprint")
@@ -360,6 +375,31 @@ class AuthorStageNetlistTests(unittest.TestCase):
         ok, _detail, findings = self.check("13_Create_Custom_Library")
         self.assertFalse(ok)
         self.assertIn("ATtiny85 微控制器 第 8 腳（VCC）", findings[0]["description"])
+
+    def test_before_erc_start_has_exactly_the_errors_lesson_5_teaches(self):
+        import build_diya_data
+        sch = REPO / "learning/templates/diya-before-erc/Schematics.kicad_sch"
+        self.assertTrue(checks.check_netlist(checks.find_cli(), sch, self.spec)[0])
+        errors = {kind: count for (severity, kind), count in build_diya_data.erc_types(checks.find_cli(), sch).items()
+                  if severity == "error"}
+        self.assertEqual(errors, {"power_pin_not_driven": 2, "pin_not_connected": 4})
+
+    def test_every_connection_check_in_lessons_3_to_6_passes_on_a_complete_drawing(self):
+        catalog = json.loads((REPO / "learning/catalog.json").read_text(encoding="utf-8"))
+        parts, _pins, nets = checks.read_netlist(checks.find_cli(), REPO / "learning/templates/diya-before-erc/Schematics.kicad_sch")
+        scopes = [check.get("parts") for lesson in catalog["lessons"] if lesson["id"] in ("03", "04", "05", "06")
+                  for step in lesson["steps"] + [lesson["challenge"]] for check in step.get("checks", [])
+                  if check["type"] == "netlist_matches"]
+        self.assertGreaterEqual(len(scopes), 10)
+        for scope in scopes:
+            with self.subTest(scope=scope):
+                ok, _detail, findings = checks.compare_netlist(self.spec, parts, nets, scope)
+                self.assertTrue(ok, findings)
+
+    def test_lesson_6_starts_with_seven_parts_still_needing_footprints(self):
+        parts, _pins, _nets = checks.read_netlist(checks.find_cli(), REPO / "5_Perform_ERC/Schematics.kicad_sch")
+        _ok, _detail, findings = checks.compare_footprints(self.spec, parts)
+        self.assertEqual(sum("還沒有封裝" in f["description"] for f in findings), 7)
 
 
 if __name__ == "__main__":

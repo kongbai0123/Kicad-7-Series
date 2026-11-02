@@ -2,7 +2,7 @@
 
 **fork of [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series)** · [English](README.en.md) · [v0.1.0](https://github.com/kongbai0123/Kicad-7-Series/releases/tag/v0.1.0)
 
-以繁體中文、逐步操作與實際畫面，學習從原理圖到 PCB 製板輸出的完整流程。本 fork 在 [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series) 的教材上，加入 **15 章 33 節的整節學習頁、90 個操作小步、第 00 章快捷鍵速查、每章練習題、截圖圖解、練習副本與共用進度**。
+以繁體中文、逐步操作與實際畫面，學習從原理圖到 PCB 製板輸出的完整流程。本 fork 在 [pcbcupid/Kicad-7-Series](https://github.com/pcbcupid/Kicad-7-Series) 的教材上，加入 **15 章的整節學習頁、第 00 章快捷鍵速查、每章練習題、截圖圖解與共用進度**；第 3～6 課改為在你自己的 Diya 專案上，從空白原理圖一路畫到指定封裝，並以規格表自動比對成果。
 
 原教材使用 **KiCad 7**；本學習系統以 **Windows 與 KiCad 10.0.7 繁體中文介面**實作。需求：**Windows、Python 3.10 以上、KiCad**。變更見 [更新紀錄](CHANGELOG.md)。
 
@@ -20,7 +20,7 @@ cd Kicad-7-Series
 
 也可以在檔案總管連按兩下根目錄的 **`Start-Learning.cmd`**。程式會啟動本機服務並開啟瀏覽器，預設網址為 `http://127.0.0.1:8765/`；若連接埠被占用，會尋找下一個可用位置。服務只監聽本機。
 
-1. 在左側章節欄選一節，按 **開啟練習專案**。全部 15 課都會建立自己的副本。
+1. 在左側章節欄選一節，按 **開啟練習專案**。第 3～6 課接著用你自己的 Diya 專案（第 3 課從空白開始），其餘各課建立自己的副本。
 2. 一節的小步排在同一頁：左邊照著做，右邊對照編號實拍；做完看「做完應該看到」。
 3. 有自動檢查時可按 **先檢查一次**；「想一想」是選答，不會擋住記錄。
 4. 實際完成後按 **我做完了，記錄這一步**。可以不照順序，也能直接跳到任何一節。
@@ -36,7 +36,7 @@ cd Kicad-7-Series
 | --- | --- | --- |
 | 01 | 入門與第一塊 LED 電路板 | [1_Introduction](1_Introduction/) |
 | 02 | 介面、工具與畫面操作 | [2_User Interface](2_User%20Interface/) |
-| 03 | 建立與核對 Diya 原理圖 | [3_Schematics](3_Schematics/) |
+| 03 | 從空白畫出 Diya 原理圖 | [3_Schematics](3_Schematics/) |
 | 04 | 整理原理圖與圖框 | [4_Prettify_Schematics](4_Prettify_Schematics/) |
 | 05 | 執行與處理 ERC | [5_Perform_ERC](5_Perform_ERC/) |
 | 06 | 指定與核對元件封裝 | [6_Assign_Footprint](6_Assign_Footprint/) |
