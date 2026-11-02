@@ -49,6 +49,19 @@ def reference():
     return state.read_json(path) if path.is_file() else None
 
 
+def specs():
+    """Design specs that lessons on a shared project are checked against, keyed by project."""
+    return {path.name[:-len("-spec.json")]: state.read_json(path)
+            for path in sorted(state.LEARNING.glob("*-spec.json"))}
+
+
+def error_body(exc):
+    body = {"error": str(exc)}
+    if getattr(exc, "code", None):
+        body["code"] = exc.code
+    return body
+
+
 def learning_resources():
     resources = state.read_json(state.LEARNING / "resources.json")
     journal = list(resources.get("journal", []))
@@ -114,7 +127,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json({
                     "projectRoot": str(state.REPO),
                     "catalog": state.catalog(), "progress": state.progress(),
-                    "reference": reference(), **learning_resources()})
+                    "reference": reference(), "specs": specs(), **learning_resources()})
             if route == "/api/export":
                 return self.send_json(state.progress(), extra={"Content-Disposition": 'attachment; filename="KiCad-learning-progress.json"'})
             if route in {"/", "/index.html", "/sections.css", "/sections.js", "/legacy.html", "/app.css", "/app.js"}:
@@ -135,7 +148,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_bytes(b"", "image/x-icon", 204)
             raise state.StateError("找不到這個頁面。", 404)
         except state.StateError as exc:
-            self.send_json({"error": str(exc)}, exc.status)
+            self.send_json(error_body(exc), exc.status)
         except (OSError, ValueError, KeyError) as exc:
             self.send_json({"error": f"讀取學習資料失敗：{exc}"}, 500)
 
@@ -169,6 +182,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json(state.workspace(payload))
             if route == "/api/reset":
                 return self.send_json(state.reset(payload))
+            if route == "/api/rescue":
+                return self.send_json(state.rescue(payload))
             if route == "/api/open":
                 path = state.open_target(payload.get("lessonId"), payload.get("target"))
                 if os.name != "nt":
@@ -177,7 +192,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json({"ok": True, "path": str(path)})
             raise state.StateError("找不到這個操作。", 404)
         except state.StateError as exc:
-            self.send_json({"error": str(exc)}, exc.status)
+            self.send_json(error_body(exc), exc.status)
         except (OSError, ValueError, KeyError) as exc:
             self.send_json({"error": f"儲存或開啟失敗：{exc}"}, 400)
 

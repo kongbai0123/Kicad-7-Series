@@ -205,6 +205,11 @@ pre.saved { white-space: pre-wrap; margin: 6px 0 0; padding: 10px; background: #
 .reset-box.is-confirming { padding: 12px 14px; border: 1px solid #ecd6b4; border-radius: 10px; background: var(--amber-tint); }
 .reset-box p { margin: 0 0 8px; font-size: 14px; }
 
+.project-line { margin: -4px 0 12px; }
+.spec-table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 13px; }
+.spec-table th, .spec-table td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.spec-table th { color: var(--muted); font-weight: 700; }
+
 /* Reference cards */
 .ref-grid { max-width: 1320px; margin: 0 auto 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
 .ref-card { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); display: grid; gap: 6px; align-content: start; }

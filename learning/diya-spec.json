@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "id": "diya",
+  "title": "Reactive Diya 規格表",
+  "source": {
+    "folder": "6_Assign_Footprint",
+    "file": "Schematics.kicad_sch",
+    "note": "由作者第 6 課原理圖以 kicad-cli 匯出 netlist 產生；元件用途為人工整理。"
+  },
+  "parts": [
+    {
+      "key": "BT1",
+      "label": "鈕扣電池",
+      "role": "供電；負極經 SW1 開關接到 GND。",
+      "lib": "Device:Battery_Cell",
+      "value": "3.3V Cell",
+      "footprint": "Battery:BatteryHolder_ComfortableElectronic_CH273-2450_1x2450",
+      "pins": {
+        "1": "+",
+        "2": "-"
+      }
+    },
+    {
+      "key": "SW1",
+      "label": "電源開關",
+      "role": "接通或切斷電池負極與 GND；中間腳 B 是共用腳。",
+      "lib": "Switch:SW_SPDT",
+      "value": "SW_SPDT",
+      "footprint": "Button_Switch_THT:SW_CuK_OS102011MA1QN1_SPDT_Angled",
+      "pins": {
+        "1": "A",
+        "2": "B",
+        "3": "C"
+      },
+      "swap": [
+        [
+          "1",
+          "3"
+        ]
+      ]
+    },
+    {
+      "key": "U1",
+      "label": "ATtiny85 微控制器",
+      "role": "讀取光感與聲音，控制 LED。",
+      "lib": "MCU_Microchip_ATtiny:ATtiny85V-10P",
+      "value": "ATtiny85V-10P",
+      "footprint": "Package_DIP:DIP-8_W7.62mm",
+      "pins": {
+        "1": "~{RESET}/PB5",
+        "2": "XTAL1/PB3",
+        "3": "XTAL2/PB4",
+        "4": "GND",
+        "5": "AREF/PB0",
+        "6": "PB1",
+        "7": "PB2",
+        "8": "VCC"
+      }
+    },
+    {
+      "key": "R1",
+      "label": "10k 電阻",
+      "role": "和光敏電阻串成分壓，中點接 ATtiny85 第 7 腳（PB2）。",
+      "lib": "Device:R",
+      "value": "10k",
+      "footprint": "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P15.24mm_Horizontal",
+      "pins": {
+        "1": "",
+        "2": ""
+      },
+      "ohms": 10000.0,
+      "swap": [
+        [
+          "1",
+          "2"
+        ]
+      ]
+    },
+    {
+      "key": "R2",
+      "label": "光敏電阻",
+      "role": "光線越亮電阻越小；另一端接 GND。",
+      "lib": "Sensor_Optical:LDR07",
+      "value": "5mm LDR",
+      "footprint": "OptoDevice:R_LDR_5.1x4.3mm_P3.4mm_Vertical",
+      "pins": {
+        "1": "",
+        "2": ""
+      },
+      "swap": [
+        [
+          "1",
+          "2"
+        ]
+      ]
+    },
+    {
+      "key": "R3",
+      "label": "5.6k 電阻",
+      "role": "供電給麥克風，訊號接 ATtiny85 第 2 腳（PB3）。",
+      "lib": "Device:R",
+      "value": "5.6k",
+      "footprint": "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P15.24mm_Horizontal",
+      "pins": {
+        "1": "",
+        "2": ""
+      },
+      "ohms": 5600.0,
+      "swap": [
+        [
+          "1",
+          "2"
+        ]
+      ]
+    },
+    {
+      "key": "MK1",
+      "label": "麥克風",
+      "role": "偵測聲音；以 2 腳排針連接。",
+      "lib": "Device:Microphone_Condenser",
+      "value": "Microphone_Condenser",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical",
+      "pins": {
+        "1": "-",
+        "2": "+"
+      }
+    },
+    {
+      "key": "D1",
+      "label": "LED",
+      "role": "陽極接 ATtiny85 第 6 腳（PB1），由程式點亮。",
+      "lib": "Device:LED",
+      "value": "5mm Yellow LED",
+      "footprint": "LED_THT:LED_D5.0mm",
+      "pins": {
+        "1": "K",
+        "2": "A"
+      }
+    },
+    {
+      "key": "R4",
+      "label": "470Ω 電阻",
+      "role": "LED 的限流電阻，接在陰極與 GND 之間。",
+      "lib": "Device:R",
+      "value": "470R",
+      "footprint": "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P15.24mm_Horizontal",
+      "pins": {
+        "1": "",
+        "2": ""
+      },
+      "ohms": 470.0,
+      "swap": [
+        [
+          "1",
+          "2"
+        ]
+      ]
+    }
+  ],
+  "nets": [
+    [
+      {
+        "part": "BT1",
+        "pin": "1"
+      },
+      {
+        "part": "R1",
+        "pin": "1"
+      },
+      {
+        "part": "R3",
+        "pin": "1"
+      },
+      {
+        "part": "U1",
+        "pin": "8"
+      }
+    ],
+    [
+      {
+        "part": "BT1",
+        "pin": "2"
+      },
+      {
+        "part": "SW1",
+        "pin": "3"
+      }
+    ],
+    [
+      {
+        "part": "D1",
+        "pin": "1"
+      },
+      {
+        "part": "R4",
+        "pin": "1"
+      }
+    ],
+    [
+      {
+        "part": "D1",
+        "pin": "2"
+      },
+      {
+        "part": "U1",
+        "pin": "6"
+      }
+    ],
+    [
+      {
+        "part": "MK1",
+        "pin": "1"
+      },
+      {
+        "part": "R2",
+        "pin": "2"
+      },
+      {
+        "part": "R4",
+        "pin": "2"
+      },
+      {
+        "part": "SW1",
+        "pin": "2"
+      },
+      {
+        "part": "U1",
+        "pin": "4"
+      }
+    ],
+    [
+      {
+        "part": "MK1",
+        "pin": "2"
+      },
+      {
+        "part": "R3",
+        "pin": "2"
+      },
+      {
+        "part": "U1",
+        "pin": "2"
+      }
+    ],
+    [
+      {
+        "part": "R1",
+        "pin": "2"
+      },
+      {
+        "part": "R2",
+        "pin": "1"
+      },
+      {
+        "part": "U1",
+        "pin": "7"
+      }
+    ]
+  ],
+  "unconnected": [
+    {
+      "part": "SW1",
+      "pin": "1"
+    },
+    {
+      "part": "U1",
+      "pin": "1"
+    },
+    {
+      "part": "U1",
+      "pin": "3"
+    },
+    {
+      "part": "U1",
+      "pin": "5"
+    }
+  ]
+}

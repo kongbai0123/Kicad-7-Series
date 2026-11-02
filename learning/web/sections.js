@@ -13,6 +13,8 @@
     quiz: new Map(),
     drafts: new Map(),
     confirmReset: null,
+    confirmRescue: null,
+    needsProject: null,
     noticeTimer: null,
     clipboardTrigger: null,
     lightboxTrigger: null,
@@ -52,6 +54,38 @@
     return lesson.sections.find((section) => section.steps.some((id) => !done.has(id))) || lesson.sections[0];
   };
   const reference = () => state.data?.reference;
+  const KIND_LABEL = { setup: '準備', read: '觀察', build: '實作' };
+  const kindOf = (step) => step.kind || 'read';
+  const sharedOf = (lesson) => lesson?.practice?.project || null;
+  const projectLabel = (lesson) => `${sharedOf(lesson).charAt(0).toUpperCase()}${sharedOf(lesson).slice(1)} 練習專案`;
+  // Lessons that keep building the same learner project, in course order.
+  const chainOf = (lesson) => lessons().filter((item) => sharedOf(item) && sharedOf(item) === sharedOf(lesson));
+  const touched = (id) => {
+    const p = progressOf(id);
+    return p.status !== 'not_started' || Boolean(p.workspace) || (p.completedSteps || []).length > 0 || Boolean(p.notes) || (p.evidence || []).length > 0;
+  };
+  // Resetting or rescuing a shared-project lesson also resets every later lesson already begun on that project.
+  const cascadeOf = (lesson) => {
+    const chain = chainOf(lesson);
+    return chain.slice(chain.indexOf(lesson)).filter((item) => item === lesson || touched(item.id));
+  };
+  const lessonList = (items) => items.map((item) => `第 ${item.id} 課`).join('、');
+  const authorLesson = (folder) => lessons().find((item) => item.folder === folder)?.id || folder;
+  const levelsOf = (lesson) => {
+    const done = doneSet(lesson.id);
+    const count = (kind) => {
+      const steps = lesson.steps.filter((step) => kindOf(step) === kind);
+      return [steps.filter((step) => done.has(step.id)).length, steps.length];
+    };
+    return { read: count('read'), build: count('build'), independent: Boolean(progressOf(lesson.id).challenge) };
+  };
+  const levelText = (lesson) => {
+    const level = levelsOf(lesson);
+    return `已閱讀 ${level.read[0]}/${level.read[1]} · 已實作 ${level.build[0]}/${level.build[1]} · 練習題${level.independent ? ' ✓' : '未做'}`;
+  };
+  const originText = (from) => !from ? '' : from === 'blank' ? '從空白專案開始'
+    : from === 'own' ? '接續你上一課的成果'
+    : from.startsWith('rescue:') ? `從作者第 ${authorLesson(from.slice(7))} 課完成時的檔案接續（救援）` : from;
 
   class HttpError extends Error {
     constructor(message, status, data) { super(message); this.status = status; this.data = data; }
@@ -147,14 +181,16 @@
     const marks = figure.marks || [];
     return `<figure class="fig">${figure.role ? `<span class="fig-role ${escapeHtml(figure.role)}">${escapeHtml(ROLE_LABEL(figure.role))}</span>` : ''}<button type="button" class="shot" data-zoom="${index}" aria-label="放大查看：${escapeHtml(figure.caption)}"><img src="${fileUrl(figure.image)}" alt="${escapeHtml(figure.caption)}" loading="lazy">${marks.map((m) => `<span class="shot-mark" style="left:${clamp(m.x)}%;top:${clamp(m.y)}%" aria-hidden="true">${escapeHtml(m.n)}</span>`).join('')}</button><figcaption>${escapeHtml(figure.caption)} · 點圖可放大</figcaption>${marks.length ? `<ol class="legend">${marks.map((m) => `<li><span class="mark">${escapeHtml(m.n)}</span><span>${escapeHtml(m.label)}</span></li>`).join('')}</ol>` : ''}</figure>`;
   }
-  const CHECK_NAMES = { project_open: '是否開對練習副本', saved_since_start: '是否已儲存', erc: 'ERC', drc: 'DRC', footprints: '封裝是否都已指定', new_file: '是否產生新檔案', new_zip: '輸出 ZIP 內容' };
+  const CHECK_NAMES = { netlist_matches: '原理圖是否符合規格表', project_open: '是否開對練習副本', saved_since_start: '是否已儲存', erc: 'ERC', drc: 'DRC', footprints: '封裝是否都已指定', new_file: '是否產生新檔案', new_zip: '輸出 ZIP 內容' };
   function renderCheck(key, checks, payload) {
     if (!(checks || []).length) return '';
     const result = state.checks.get(key);
     const badge = (item) => item.ok === true ? '<span class="state ok">通過</span>'
       : item.ok === false ? `<span class="state ${item.required ? 'fail' : 'info'}">${item.required ? '未通過' : '參考'}</span>`
       : `<span class="state warn">${item.required ? '無法驗證' : '無法判斷'}</span>`;
-    const findings = (item) => (item.findings || []).length ? `<ul class="findings">${item.findings.map((f) => `<li class="${f.ignorable ? 'is-ignorable' : ''}"><strong>${f.severity === 'error' ? '錯誤' : '警告'} ×${escapeHtml(f.count)}</strong> <code>${escapeHtml(f.type)}</code>${f.ignorable ? ' <span class="tag">可忽略</span>' : ''} ${escapeHtml(f.explain || f.description)}</li>`).join('')}</ul>` : '';
+    // KiCad rule violations show their rule code and count; spec comparison messages stand on their own.
+    const SPEC_FINDINGS = new Set(['part', 'missing', 'extra']);
+    const findings = (item) => (item.findings || []).length ? `<ul class="findings">${item.findings.map((f) => SPEC_FINDINGS.has(f.type) ? `<li>${escapeHtml(f.description)}</li>` : `<li class="${f.ignorable ? 'is-ignorable' : ''}"><strong>${f.severity === 'error' ? '錯誤' : '警告'} ×${escapeHtml(f.count)}</strong> <code>${escapeHtml(f.type)}</code>${f.ignorable ? ' <span class="tag">可忽略</span>' : ''} ${escapeHtml(f.explain || f.description)}</li>`).join('')}</ul>` : '';
     const body = result
       ? `<ul class="check-list">${result.items.map((item) => `<li>${badge(item)}<div><strong>${escapeHtml(item.label)}${item.required ? '' : '（參考）'}</strong><span>${escapeHtml(item.detail)}</span>${findings(item)}</div></li>`).join('')}</ul>${(result.unverified || []).length ? '<p class="hint">有必要檢查無法執行；仍可記錄完成，但會標為「無法自動驗證」，不算工具通過。</p>' : ''}`
       : `<p class="hint">做完並存檔後可先檢查：${checks.map((c) => escapeHtml(CHECK_NAMES[c.type] || c.type)).join('、')}。記錄完成時也會自動檢查。</p>`;
@@ -189,7 +225,7 @@
       ? `<div class="confirm-row">${evidenceBadges(lesson.id, step.id)}</div>`
       : `<div class="confirm-row"><button type="button" class="btn btn-primary" data-action="confirm" data-lesson="${lesson.id}" data-step="${escapeHtml(step.id)}"${state.busy || state.checking ? ' disabled' : ''}>我做完了，記錄這一步</button><p class="hint">${(step.checks || []).length ? '按下後會先自動檢查練習檔，必要項目通過才記錄。' : '看到上方「做完應該看到」的結果再按。'}可以不照順序記錄。</p></div>`;
     const help = step.help ? `<details class="more"><summary>找不到位置或畫面不同？</summary><p>${escapeHtml(step.help)}</p><p class="muted">仍不確定時，按頁首「複製接續訊息」貼到 AI 助教，並附上目前畫面。</p></details>` : '';
-    return `<article class="step${figures.length ? '' : ' no-figure'}" id="step-${escapeHtml(step.id)}" aria-labelledby="t-${escapeHtml(step.id)}"><div class="step-text"><div class="step-head"><span class="dot${done ? ' is-done' : ''}">${done ? '✓' : index + 1}</span><h2 id="t-${escapeHtml(step.id)}">${escapeHtml(step.title)}</h2><span class="step-id">${escapeHtml(step.id)}</span></div><p class="focus">${escapeHtml(step.action)}</p>${why}${terms}${ops}<p class="label">做完應該看到</p><ul class="checks">${success.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>${pitfalls}${renderQuiz(step)}${done ? '' : renderCheck(step.id, step.checks, { lessonId: lesson.id, stepId: step.id })}${confirm}${help}</div>${figures.length ? `<div class="step-figs">${figures.map((f, i) => renderFigure(f, `${figureBase}:${i}`)).join('')}</div>` : ''}</article>`;
+    return `<article class="step${figures.length ? '' : ' no-figure'}" id="step-${escapeHtml(step.id)}" aria-labelledby="t-${escapeHtml(step.id)}"><div class="step-text"><div class="step-head"><span class="dot${done ? ' is-done' : ''}">${done ? '✓' : index + 1}</span><h2 id="t-${escapeHtml(step.id)}">${escapeHtml(step.title)}</h2><span class="step-id">${KIND_LABEL[kindOf(step)] || ''} · ${escapeHtml(step.id)}</span></div><p class="focus">${escapeHtml(step.action)}</p>${why}${terms}${ops}<p class="label">做完應該看到</p><ul class="checks">${success.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>${pitfalls}${renderQuiz(step)}${done ? '' : renderCheck(step.id, step.checks, { lessonId: lesson.id, stepId: step.id })}${confirm}${help}</div>${figures.length ? `<div class="step-figs">${figures.map((f, i) => renderFigure(f, `${figureBase}:${i}`)).join('')}</div>` : ''}</article>`;
   }
   function renderSection() {
     const { lesson, section } = state.route;
@@ -202,9 +238,26 @@
     const next = all[position + 1];
     const link = (item, cls, label) => item ? `<a class="${cls}" href="#/${item.l.id}/${item.s.id}"><span>${label}</span>${sectionNumber(item.l, item.s)} ${escapeHtml(item.s.title)}</a>` : '';
     const progress = progressOf(lesson.id);
-    const head = `<header class="page-head"><p class="eyebrow">第 ${lesson.id} 課 · ${escapeHtml(lesson.stage || '')} · 第 ${index + 1} 節／共 ${lesson.sections.length} 節</p><h1><span class="h-num">${sectionNumber(lesson, section)}</span>${escapeHtml(section.title)}</h1><p class="point">${escapeHtml(section.point)}</p><div class="tools"><button type="button" class="btn" data-action="open-project" data-lesson="${lesson.id}">開啟練習專案</button><button type="button" class="btn" data-action="open-folder" data-lesson="${lesson.id}"${progress.workspace ? '' : ' disabled title="先按「開啟練習專案」建立副本"'}>開啟練習資料夾</button><button type="button" class="btn" data-action="copy-resume">複製接續訊息</button><span class="meter">本節 ${steps.filter((s) => done.has(s.id)).length} / ${steps.length} 小步已確認 · 本課 ${done.size} / ${lesson.steps.length}</span></div><ol class="chips">${steps.map((s, i) => `<li><a href="#/${lesson.id}/${section.id}/${s.id}" class="${done.has(s.id) ? 'is-done' : ''}"><span class="dot${done.has(s.id) ? ' is-done' : ''}">${done.has(s.id) ? '✓' : i + 1}</span>${escapeHtml(s.title)}</a></li>`).join('')}</ol></header>`;
+    const head = `<header class="page-head"><p class="eyebrow">第 ${lesson.id} 課 · ${escapeHtml(lesson.stage || '')} · 第 ${index + 1} 節／共 ${lesson.sections.length} 節</p><h1><span class="h-num">${sectionNumber(lesson, section)}</span>${escapeHtml(section.title)}</h1><p class="point">${escapeHtml(section.point)}</p><div class="tools"><button type="button" class="btn" data-action="open-project" data-lesson="${lesson.id}">開啟練習專案</button><button type="button" class="btn" data-action="open-folder" data-lesson="${lesson.id}"${progress.workspace ? '' : ' disabled title="先按「開啟練習專案」建立副本"'}>開啟練習資料夾</button><button type="button" class="btn" data-action="copy-resume">複製接續訊息</button><span class="meter">本節 ${steps.filter((s) => done.has(s.id)).length} / ${steps.length} 小步已確認 · 本課 ${levelText(lesson)}</span></div>${sharedOf(lesson) ? `<p class="muted project-line">練習專案：你的 ${escapeHtml(projectLabel(lesson))}，第 ${chainOf(lesson)[0].id}～${chainOf(lesson).slice(-1)[0].id} 課都接著用${progress.projectFrom ? `；本課${escapeHtml(originText(progress.projectFrom))}` : ''}。</p>` : ''}${state.needsProject === lesson.id ? renderNeedsProject(lesson) : ''}<ol class="chips">${steps.map((s, i) => `<li><a href="#/${lesson.id}/${section.id}/${s.id}" class="${done.has(s.id) ? 'is-done' : ''}"><span class="dot${done.has(s.id) ? ' is-done' : ''}">${done.has(s.id) ? '✓' : i + 1}</span>${escapeHtml(s.title)}</a></li>`).join('')}</ol></header>`;
     const last = index === lesson.sections.length - 1;
     return `${head}${steps.map((s, i) => renderStep(lesson, s, i, `${lesson.id}:${s.id}`)).join('')}${last ? renderWrapUp(lesson) : ''}<nav class="pager" aria-label="換節">${link(prev, 'prev', '上一節')}${link(next, 'next', '下一節')}</nav>${renderLessonTools(lesson)}`;
+  }
+  function renderNeedsProject(lesson) {
+    const first = chainOf(lesson)[0];
+    const start = lesson.practice?.startFrom;
+    return `<div class="reset-box is-confirming" role="group" aria-label="還沒有練習專案"><p><strong>還沒有你自己的 ${escapeHtml(projectLabel(lesson))}</strong></p><p>第 ${first.id} 課會從空白開始建立它，之後各課都接著用同一個專案。${start ? `也可以直接用作者第 ${escapeHtml(authorLesson(start))} 課完成時的檔案當本課起點；之後這份專案會標示「從作者起點接續」。` : ''}</p><div class="row"><a class="btn btn-primary btn-small" href="#/${first.id}/${first.sections[0].id}">回第 ${first.id} 課從頭做</a>${start ? `<button type="button" class="btn btn-small" data-action="start-from-author" data-lesson="${lesson.id}">用作者起點開始本課</button>` : ''}<button type="button" class="btn btn-small btn-quiet" data-action="needs-cancel">取消</button></div></div>`;
+  }
+  function renderSpec(lesson) {
+    const spec = state.data.specs?.[sharedOf(lesson)];
+    if (!spec) return '';
+    return `<details class="more"><summary>${escapeHtml(spec.title)}（${spec.parts.length} 個元件）</summary><table class="spec-table"><thead><tr><th>參考</th><th>元件</th><th>數值</th><th>用途</th></tr></thead><tbody>${spec.parts.map((part) => `<tr><td>${escapeHtml(part.key)}</td><td>${escapeHtml(part.label)}<br><code>${escapeHtml(part.lib.split(':').pop())}</code></td><td>${escapeHtml(part.value)}</td><td>${escapeHtml(part.role)}</td></tr>`).join('')}</tbody></table><p class="muted">自動檢查依「元件種類＋數值」比對，參考編號不必和表中相同。</p></details>`;
+  }
+  function renderRescue(lesson) {
+    const start = lesson.practice?.startFrom;
+    if (!start) return '';
+    if (state.confirmRescue !== lesson.id) return `<div class="reset-box"><button type="button" class="btn btn-small btn-quiet" data-action="rescue-ask" data-lesson="${lesson.id}">改用作者起點（救援）</button></div>`;
+    const affected = cascadeOf(lesson);
+    return `<div class="reset-box is-confirming" role="group"><p><strong>要改用作者第 ${escapeHtml(authorLesson(start))} 課完成時的檔案嗎？</strong></p><p>你目前的專案會先封存到 learning/archive/，不會刪除；${lessonList(affected)}會回到第 1 步，更早各課的確認紀錄保留。請先在 KiCad 用「檔案 → 關閉專案」關掉專案。</p><div class="row"><button type="button" class="btn btn-primary btn-small" data-action="rescue-confirm" data-lesson="${lesson.id}">確定改用作者起點</button><button type="button" class="btn btn-small" data-action="rescue-cancel">取消</button></div></div>`;
   }
   function renderWrapUp(lesson) {
     const progress = progressOf(lesson.id);
@@ -237,7 +290,10 @@
       return /\.kicad_(pro|pcb|sch)$/i.test(path) ? `<li>${name}<span class="muted">（請用「開啟練習專案」）</span></li>` : `<li><a href="${fileUrl(path, /\.md$/i.test(path))}" target="_blank" rel="noopener"${/\.zip$/i.test(path) ? ' download' : ''}>${name}</a></li>`;
     }).join('');
     const draft = state.drafts.get(lesson.id) || '';
-    return `<details class="panel" id="lesson-tools"${state.confirmReset === lesson.id ? ' open' : ''}><summary><strong>本課資源、筆記與重新學習</strong></summary><div class="panel-grid" style="margin-top:12px"><div>${media.length ? `<h3>原作者教學影片</h3><ul class="plain">${media.map((m) => `<li>${m}</li>`).join('')}</ul><p class="muted">英文影片，以 KiCad 7 示範；按鈕以你目前的 KiCad 畫面為準。</p>` : ''}${files ? `<h3>教材檔案</h3><ul class="plain">${files}</ul>` : ''}${lesson.context ? `<h3>本課教材說明</h3><p class="muted">${escapeHtml(asText(lesson.context))}</p>` : ''}</div><div><h3>卡關筆記</h3><form class="note-form" data-note-form data-lesson="${lesson.id}"><textarea rows="3" data-note-input data-lesson="${lesson.id}" placeholder="例如：已找到 Edge.Cuts，但不知道如何把圓形改到這一層。">${escapeHtml(draft)}</textarea><div class="row"><button type="submit" class="btn btn-small"${draft.trim() ? '' : ' disabled'} data-save-note>儲存筆記</button><span class="muted">保存在專案內，與 AI 助教共用。</span></div></form>${progress.notes ? `<details class="more"><summary>目前筆記摘要</summary><pre class="saved">${escapeHtml(progress.notes)}</pre></details>` : ''}${progress.workspace ? `<h3>練習副本</h3><p class="muted"><code>${escapeHtml(progress.workspace)}</code></p>` : ''}${renderReset(lesson.id)}</div></div></details>`;
+    const project = sharedOf(lesson)
+      ? `<h3>你的 ${escapeHtml(projectLabel(lesson))}</h3><p class="muted"><code>learning/workspaces/${escapeHtml(sharedOf(lesson))}</code>；${progress.projectFrom ? `本課${escapeHtml(originText(progress.projectFrom))}。` : '本課還沒開始。'}</p>${renderSpec(lesson)}${renderRescue(lesson)}`
+      : progress.workspace ? `<h3>練習副本</h3><p class="muted"><code>${escapeHtml(progress.workspace)}</code></p>` : '';
+    return `<details class="panel" id="lesson-tools"${state.confirmReset === lesson.id || state.confirmRescue === lesson.id ? ' open' : ''}><summary><strong>本課資源、筆記與重新學習</strong></summary><div class="panel-grid" style="margin-top:12px"><div>${media.length ? `<h3>原作者教學影片</h3><ul class="plain">${media.map((m) => `<li>${m}</li>`).join('')}</ul><p class="muted">英文影片，以 KiCad 7 示範；按鈕以你目前的 KiCad 畫面為準。</p>` : ''}${files ? `<h3>教材檔案</h3><ul class="plain">${files}</ul>` : ''}${lesson.context ? `<h3>本課教材說明</h3><p class="muted">${escapeHtml(asText(lesson.context))}</p>` : ''}</div><div><h3>卡關筆記</h3><form class="note-form" data-note-form data-lesson="${lesson.id}"><textarea rows="3" data-note-input data-lesson="${lesson.id}" placeholder="例如：已找到 Edge.Cuts，但不知道如何把圓形改到這一層。">${escapeHtml(draft)}</textarea><div class="row"><button type="submit" class="btn btn-small"${draft.trim() ? '' : ' disabled'} data-save-note>儲存筆記</button><span class="muted">保存在專案內，與 AI 助教共用。</span></div></form>${progress.notes ? `<details class="more"><summary>目前筆記摘要</summary><pre class="saved">${escapeHtml(progress.notes)}</pre></details>` : ''}${project}${renderReset(lesson.id)}</div></div></details>`;
   }
   function canReset(scope) {
     if (scope === 'all') return lessons().some((lesson) => canReset(lesson.id));
@@ -248,7 +304,13 @@
     if (!canReset(scope)) return '';
     const all = scope === 'all';
     if (state.confirmReset !== scope) return `<div class="reset-box"><button type="button" class="btn btn-small btn-quiet" data-action="reset-ask" data-scope="${scope}">${all ? '全部課程重新開始' : '重新學習本課'}</button></div>`;
-    return `<div class="reset-box is-confirming" role="group"><p><strong>${all ? '要讓全部 15 課都回到第 1 步嗎？' : '要讓本課回到第 1 步嗎？'}</strong></p><p>進度、筆記與練習副本會封存到 learning/archive/，不會刪除。請先在 KiCad 用「檔案 → 關閉專案」關掉${all ? '練習專案' : '本課專案'}。</p><div class="row"><button type="button" class="btn btn-primary btn-small" data-action="reset-confirm" data-scope="${scope}">確定重新開始</button><button type="button" class="btn btn-small" data-action="reset-cancel">取消</button></div></div>`;
+    const lesson = !all && lessonById(scope);
+    const affected = lesson && sharedOf(lesson) ? cascadeOf(lesson) : [];
+    const detail = affected.length > 1
+      ? `${lessonList(affected)}都會回到第 1 步，你的 ${escapeHtml(projectLabel(lesson))}會還原成本課開始時的樣子；之後各課做的修改會一起封存到 learning/archive/，不會刪除。`
+      : affected.length ? `你的 ${escapeHtml(projectLabel(lesson))}會還原成本課開始時的樣子；本課做的修改與進度會封存到 learning/archive/，不會刪除。`
+      : '進度、筆記與練習副本會封存到 learning/archive/，不會刪除。';
+    return `<div class="reset-box is-confirming" role="group"><p><strong>${all ? '要讓全部 15 課都回到第 1 步嗎？' : '要讓本課回到第 1 步嗎？'}</strong></p><p>${detail}請先在 KiCad 用「檔案 → 關閉專案」關掉${all ? '練習專案' : '本課專案'}。</p><div class="row"><button type="button" class="btn btn-primary btn-small" data-action="reset-confirm" data-scope="${scope}">確定重新開始</button><button type="button" class="btn btn-small" data-action="reset-cancel">取消</button></div></div>`;
   }
 
   // ---------- Chapter 00, overview, journal ----------
@@ -266,10 +328,10 @@
   }
   function renderOverview() {
     const doneLessons = lessons().filter((l) => progressOf(l.id).status === 'completed').length;
-    return `<header class="page-head"><p class="eyebrow">15 課 · ${lessons().reduce((n, l) => n + l.sections.length, 0)} 節 · ${totalSteps()} 小步</p><h1>課程總覽</h1><p class="point">${escapeHtml(state.data.catalog.versionNote || '')}</p><p class="muted">已確認 ${totalDone()} / ${totalSteps()} 小步，完成 ${doneLessons} 課。證據分成：${(state.data.catalog.evidenceLevels || []).map((e) => `<strong>${escapeHtml(e.label)}</strong>（${escapeHtml(e.meaning)}）`).join('；')}</p></header><div class="cards">${lessons().map((lesson) => {
+    return `<header class="page-head"><p class="eyebrow">15 課 · ${lessons().reduce((n, l) => n + l.sections.length, 0)} 節 · ${totalSteps()} 小步</p><h1>課程總覽</h1><p class="point">${escapeHtml(state.data.catalog.versionNote || '')}</p><p class="muted">已確認 ${totalDone()} / ${totalSteps()} 小步，完成 ${doneLessons} 課。證據分成：${(state.data.catalog.evidenceLevels || []).map((e) => `<strong>${escapeHtml(e.label)}</strong>（${escapeHtml(e.meaning)}）`).join('；')}</p><p class="muted">完成度分成：${(state.data.catalog.completionLevels || []).map((e) => `<strong>${escapeHtml(e.label)}</strong>（${escapeHtml(e.meaning)}）`).join('；')}</p></header><div class="cards">${lessons().map((lesson) => {
       const p = progressOf(lesson.id);
       const done = doneSet(lesson.id).size;
-      return `<article class="card"><p class="eyebrow">第 ${lesson.id} 課 · ${escapeHtml(lesson.stage || '')}</p><h3>${escapeHtml(lesson.title)}</h3><p>${escapeHtml(asText(lesson.goal))}</p><div class="bar" aria-hidden="true"><span style="width:${Math.round(done / lesson.steps.length * 100)}%"></span></div><p class="muted">${done} / ${lesson.steps.length} 小步 · 練習題${p.challenge ? '已完成' : '未完成'}</p><ol class="plain">${lesson.sections.map((s) => `<li><a href="#/${lesson.id}/${s.id}">${sectionNumber(lesson, s)} ${escapeHtml(s.title)}</a></li>`).join('')}</ol></article>`;
+      return `<article class="card"><p class="eyebrow">第 ${lesson.id} 課 · ${escapeHtml(lesson.stage || '')}</p><h3>${escapeHtml(lesson.title)}</h3><p>${escapeHtml(asText(lesson.goal))}</p><div class="bar" aria-hidden="true"><span style="width:${Math.round(done / lesson.steps.length * 100)}%"></span></div><p class="muted">${escapeHtml(levelText(lesson))}</p><p class="muted">${sharedOf(lesson) ? `接續你的 ${escapeHtml(projectLabel(lesson))}${p.projectFrom ? `（${escapeHtml(originText(p.projectFrom))}）` : ''}` : '本課使用獨立副本'}</p><ol class="plain">${lesson.sections.map((s) => `<li><a href="#/${lesson.id}/${s.id}">${sectionNumber(lesson, s)} ${escapeHtml(s.title)}</a></li>`).join('')}</ol></article>`;
     }).join('')}</div>${canReset('all') ? `<section class="panel" style="margin-top:18px"><h2>想從頭再學一次？</h2><p class="muted">每課都能在該課的「本課資源、筆記與重新學習」單獨重來，也可以一次讓全部課程回到第 1 步。舊副本與進度會先封存。</p>${renderReset('all')}</section>` : ''}`;
   }
   function renderJournal() {
@@ -357,15 +419,45 @@
       rerender();
     }
   }
-  async function openPractice(lessonId, target) {
+  async function openPractice(lessonId, target, source) {
     if (state.busy) return;
     state.busy = true;
     rerender();
     try {
-      const workspace = await request('/api/workspace', { method: 'POST', body: JSON.stringify({ expectedRevision: state.data.progress.revision, lessonId }) });
+      const workspace = await request('/api/workspace', { method: 'POST', body: JSON.stringify({ expectedRevision: state.data.progress.revision, lessonId, ...(source ? { source } : {}) }) });
       if (workspace.progress) state.data.progress = workspace.progress;
+      state.needsProject = null;
       await request('/api/open', { method: 'POST', body: JSON.stringify({ lessonId, target }) });
-      notice(`${workspace.created ? '已建立本課練習副本。' : ''}${target === 'folder' ? '已開啟練習資料夾。' : '已送出開啟練習專案的要求，請查看 KiCad 視窗。'}`);
+      const made = !workspace.created ? '' : sharedOf(lessonById(lessonId)) ? (source === 'rescue' ? '已用作者起點建立你的練習專案。' : '已建立你的練習專案。') : '已建立本課練習副本。';
+      notice(`${made}${target === 'folder' ? '已開啟練習資料夾。' : '已送出開啟練習專案的要求，請查看 KiCad 視窗。'}`);
+    } catch (error) {
+      if (error.data?.code === 'needs_project') {
+        state.needsProject = lessonId;
+        notice(error.message, 'warning');
+      } else await handleError(error);
+    } finally {
+      state.busy = false;
+      rerender();
+    }
+  }
+  function forget(items) {
+    items.forEach((lesson) => {
+      state.drafts.delete(lesson.id);
+      lesson.steps.forEach((step) => { state.checks.delete(step.id); state.quiz.delete(step.id); });
+      state.checks.delete(`${lesson.id}-challenge`);
+    });
+  }
+  async function rescueLesson(lessonId) {
+    if (state.busy) return;
+    const affected = cascadeOf(lessonById(lessonId));
+    state.busy = true;
+    rerender();
+    try {
+      const result = await request('/api/rescue', { method: 'POST', body: JSON.stringify({ expectedRevision: state.data.progress.revision, lessonId, confirm: true }) });
+      state.data.progress = result.progress;
+      state.confirmRescue = null;
+      forget(affected);
+      notice('已改用作者起點，你原本的專案已封存。按「開啟練習專案」就能接著做。');
     } catch (error) {
       await handleError(error);
     } finally {
@@ -375,18 +467,16 @@
   }
   async function resetProgress(scope) {
     if (state.busy) return;
+    const lesson = scope === 'all' ? null : lessonById(scope);
+    const affected = !lesson ? lessons() : sharedOf(lesson) ? cascadeOf(lesson) : [lesson];
     state.busy = true;
     rerender();
     try {
       const result = await request('/api/reset', { method: 'POST', body: JSON.stringify({ expectedRevision: state.data.progress.revision, lessonId: scope, confirm: true }) });
       state.data.progress = result.progress;
       state.confirmReset = null;
-      (scope === 'all' ? lessons() : [lessonById(scope)]).forEach((lesson) => {
-        state.drafts.delete(lesson.id);
-        lesson.steps.forEach((step) => { state.checks.delete(step.id); state.quiz.delete(step.id); });
-        state.checks.delete(`${lesson.id}-challenge`);
-      });
-      notice(scope === 'all' ? '全部課程已回到第 1 步，舊的練習副本已封存。' : '本課已回到第 1 步，舊的練習副本已封存。');
+      forget(affected);
+      notice(scope === 'all' ? '全部課程已回到第 1 步，舊的練習副本已封存。' : affected.length > 1 ? `${lessonList(affected)}已回到第 1 步，舊的專案已封存。` : '本課已回到第 1 步，舊的練習副本已封存。');
     } catch (error) {
       await handleError(error);
     } finally {
@@ -493,6 +583,11 @@
       case 'open-folder': void openPractice(lesson, 'folder'); break;
       case 'copy-resume': void copyResume(button); break;
       case 'reset-ask': state.confirmReset = button.dataset.scope; rerender(); break;
+      case 'rescue-ask': state.confirmRescue = lesson; rerender(); break;
+      case 'rescue-cancel': state.confirmRescue = null; rerender(); break;
+      case 'rescue-confirm': void rescueLesson(lesson); break;
+      case 'start-from-author': void openPractice(lesson, 'project', 'rescue'); break;
+      case 'needs-cancel': state.needsProject = null; rerender(); break;
       case 'reset-cancel': state.confirmReset = null; rerender(); break;
       case 'reset-confirm': void resetProgress(button.dataset.scope); break;
       case 'close-lightbox': closeLightbox(); break;
