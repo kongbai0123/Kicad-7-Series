@@ -213,6 +213,11 @@
     const feedback = chosen === undefined ? '' : `<p class="quiz-feedback" role="status">${right ? `答對了。${escapeHtml(quiz.explain || '')}` : '再想想看，可以對照右側截圖。'}</p>`;
     return `<div class="quiz" role="group" aria-label="想一想"><p><strong>想一想（選答）：</strong>${escapeHtml(quiz.question)}</p><div class="quiz-options">${quiz.options.map((option, i) => `<button type="button" class="quiz-option${chosen === i ? (right ? ' is-right' : ' is-wrong') : ''}" data-action="quiz" data-step="${escapeHtml(step.id)}" data-choice="${i}" aria-pressed="${chosen === i}">${escapeHtml(option)}</button>`).join('')}</div>${feedback}</div>`;
   }
+  // Setup steps carry the open button themselves, so the learner never has to hunt for it in the page header.
+  function renderOpenHere(lesson) {
+    const where = sharedOf(lesson) ? `你的 ${projectLabel(lesson)}（learning/workspaces/${sharedOf(lesson)}）` : `本課練習副本（learning/workspaces/${lesson.id}）`;
+    return `<div class="open-here"><button type="button" class="btn btn-primary" data-action="open-project" data-lesson="${lesson.id}">開啟練習專案</button><p class="hint">按下後會開啟${escapeHtml(where)}，並自動開出 KiCad 專案管理員。頁首也有同一顆按鈕。</p></div>`;
+  }
   function renderStep(lesson, step, index, figureBase) {
     const done = doneSet(lesson.id).has(step.id);
     const guide = step.guide || [];
@@ -227,7 +232,7 @@
       ? `<div class="confirm-row">${evidenceBadges(lesson.id, step.id)}</div>`
       : `<div class="confirm-row"><button type="button" class="btn btn-primary" data-action="confirm" data-lesson="${lesson.id}" data-step="${escapeHtml(step.id)}"${state.busy || state.checking ? ' disabled' : ''}>我做完了，記錄這一步</button><p class="hint">${(step.checks || []).length ? '按下後會先自動檢查練習檔，必要項目通過才記錄。' : '看到上方「做完應該看到」的結果再按。'}可以不照順序記錄。</p></div>`;
     const help = step.help ? `<details class="more"><summary>找不到位置或畫面不同？</summary><p>${escapeHtml(step.help)}</p><p class="muted">仍不確定時，按頁首「複製接續訊息」貼到 AI 助教，並附上目前畫面。</p></details>` : '';
-    return `<article class="step${figures.length ? '' : ' no-figure'}" id="step-${escapeHtml(step.id)}" aria-labelledby="t-${escapeHtml(step.id)}"><div class="step-text"><div class="step-head"><span class="dot${done ? ' is-done' : ''}">${done ? '✓' : index + 1}</span><h2 id="t-${escapeHtml(step.id)}">${escapeHtml(step.title)}</h2><span class="step-id">${KIND_LABEL[kindOf(step)] || ''} · ${escapeHtml(step.id)}</span></div><p class="focus">${escapeHtml(step.action)}</p>${why}${terms}${ops}<p class="label">做完應該看到</p><ul class="checks">${success.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>${pitfalls}${renderQuiz(step)}${done ? '' : renderCheck(step.id, step.checks, { lessonId: lesson.id, stepId: step.id })}${confirm}${help}</div>${figures.length ? `<div class="step-figs">${figures.map((f, i) => renderFigure(f, `${figureBase}:${i}`)).join('')}</div>` : ''}</article>`;
+    return `<article class="step${figures.length ? '' : ' no-figure'}" id="step-${escapeHtml(step.id)}" aria-labelledby="t-${escapeHtml(step.id)}"><div class="step-text"><div class="step-head"><span class="dot${done ? ' is-done' : ''}">${done ? '✓' : index + 1}</span><h2 id="t-${escapeHtml(step.id)}">${escapeHtml(step.title)}</h2><span class="step-id">${KIND_LABEL[kindOf(step)] || ''} · ${escapeHtml(step.id)}</span></div><p class="focus">${escapeHtml(step.action)}</p>${kindOf(step) === 'setup' ? renderOpenHere(lesson) : ''}${why}${terms}${ops}<p class="label">做完應該看到</p><ul class="checks">${success.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>${pitfalls}${renderQuiz(step)}${done ? '' : renderCheck(step.id, step.checks, { lessonId: lesson.id, stepId: step.id })}${confirm}${help}</div>${figures.length ? `<div class="step-figs">${figures.map((f, i) => renderFigure(f, `${figureBase}:${i}`)).join('')}</div>` : ''}</article>`;
   }
   function renderSection() {
     const { lesson, section } = state.route;
